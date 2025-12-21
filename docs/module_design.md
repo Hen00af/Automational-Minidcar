@@ -40,37 +40,13 @@ Camera Module → Perception → Decision → Actuation
 
 ```mermaid
 
-flowchart TB
-  Frame["Frame
-  ----------
-  frame_id
-  t_capture_sec
-  image"]
+flowchart LR
+  CAM[Camera Module] -->|Frame| PER[Perception]
+  PER -->|Features| DEC[Decision]
+  DEC -->|Command| ACT[Actuation]
+  ACT -->|Telemetry| LOG[Logger]
 
-  Features["Features
-  ----------
-  frame_id
-  t_capture_sec
-  lateral_bias
-  quality"]
-
-  Command["Command
-  ----------
-  frame_id
-  t_capture_sec
-  steer
-  throttle
-  mode"]
-
-  Telemetry["Telemetry
-  ----------
-  frame_id
-  t_capture_sec
-  status"]
-
-  Frame --> Features
-  Features --> Command
-  Command --> Telemetry
+  CAL[Calibration] -.-> ACT
 
 ```
 
