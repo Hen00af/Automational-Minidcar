@@ -36,34 +36,87 @@ Camera Module → Perception → Decision → Actuation
 - Actuation  
   抽象的な `Command` を、実機用の物理信号（PWM等）に変換して適用する。
 
-これらは オーケストレーターによって順序通りに接続されます。
+これらは オーケストレーターによって順序通りに接続される。
+
+```mermaid
+
+flowchart TB
+  Frame["Frame
+  ----------
+  frame_id
+  t_capture_sec
+  image"]
+
+  Features["Features
+  ----------
+  frame_id
+  t_capture_sec
+  lateral_bias
+  quality"]
+
+  Command["Command
+  ----------
+  frame_id
+  t_capture_sec
+  steer
+  throttle
+  mode"]
+
+  Telemetry["Telemetry
+  ----------
+  frame_id
+  t_capture_sec
+  status"]
+
+  Frame --> Features
+  Features --> Command
+  Command --> Telemetry
+
+```
 
 ---
 
-## このコードに含まれるもの / 含まれないもの
+## データ定義
 
-### 含まれるもの
+各モジュール間でやりとりするデータ構造の定義は以下のとおり。
 
-- 各モジュールの **データ構造（dataclass）**
-- モジュール間の **インターフェース定義（Protocol）**
-- 全体をつなぐ **処理フローの骨格**
+```mermaid
+flowchart TB
+  Frame["Frame
 
-### 含まれないもの
+  ----------
+  frame_id
+  t_capture_sec
+  image"]
 
-- 画像処理アルゴリズムの実装
-- モーターやサーボを直接動かすコード
-- 特定ハードウェアへの依存実装
+  Features["Features
+
+  ----------
+  frame_id
+  t_capture_sec
+  lateral_bias
+  quality"]
+
+  Command["Command
+
+  ----------
+  frame_id
+  t_capture_sec
+  steer
+  throttle
+  mode"]
+
+  Telemetry["Telemetry
+
+  ----------
+  frame_id
+  t_capture_sec
+  status"]
+```
 
 ---
 
-## 想定する読み方
-
-1. `types_*.py` で **データの意味と責務**を把握する
-2. `protocols.py` で **モジュール間の契約**を確認する
-3. `orchestrator_skeleton.py` で **全体の流れ**を理解する
-4. 各モジュールを段階的に実装・差し替える
-
-## アーキテクチャ/インターフェース構成
+##
 
 ```py
 # ============================
