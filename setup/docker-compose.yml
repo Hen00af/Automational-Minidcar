@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minicar-dev
+    privileged: true  # GPIOアクセスに必要
+    volumes:
+      - ../:/home/pi/code  # 親ディレクトリのコードをマウント
+      - /dev:/dev  # デバイスアクセス用
+    environment:
+      - DISPLAY=${DISPLAY}
+    network_mode: host  # I2Cアクセスに必要
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
