@@ -1,18 +1,20 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: minicar-dev
-    privileged: true  # GPIOアクセスに必要
+    privileged: true  # GPIOアクセスに必要（実機環境でのみ有効）
     volumes:
       - ../:/home/pi/code  # 親ディレクトリのコードをマウント
-      - /dev:/dev  # デバイスアクセス用
+      # Linux実機環境（Raspberry Pi）でGPIOアクセスが必要な場合のみ有効化
+      # - /dev:/dev  # デバイスアクセス用（Linux専用）
     environment:
-      - DISPLAY=${DISPLAY}
-    network_mode: host  # I2Cアクセスに必要
+      - DISPLAY=${DISPLAY:-}
+    # network_mode: host  # Linux専用のためコメントアウト
+    # Windows/Macでは通常のブリッジネットワークを使用
+    # Linux実機環境でI2Cアクセスが必要な場合は、以下の行のコメントを外してください
+    # network_mode: host
     stdin_open: true
     tty: true
     command: /bin/bash
