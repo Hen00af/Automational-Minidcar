@@ -25,19 +25,6 @@
 
 ## モジュール構成
 
-Camera Module → Perception → Decision → Actuation
-
-- Camera Module  
-  カメラデバイスから画像を取得し、正規化された `Frame` を生成する。
-- Perception  
-  画像から進行方向に関する観測量（例：`lateral_bias`）と信頼度を算出する。
-- Decision
-  観測結果に基づき、操舵・速度・モードを含む `Command` を決定する。
-- Actuation  
-  抽象的な `Command` を、実機用の物理信号（PWM等）に変換して適用する。
-
-これらは オーケストレーターによって順序通りに接続される。
-
 ```mermaid
 
 flowchart LR
@@ -49,6 +36,17 @@ flowchart LR
   CAL[Calibration] -.-> ACT
 
 ```
+
+- Camera Module  
+  カメラデバイスから画像を取得し、正規化された `Frame` を生成する。
+- Perception  
+  画像から進行方向に関する観測量（例：`lateral_bias`）と信頼度を算出する。
+- Decision  
+  観測結果に基づき、操舵・速度・モードを含む `Command` を決定する。
+- Actuation  
+  抽象的な `Command` を、実機用の物理信号（PWM等）に変換して適用する。
+
+これらは オーケストレーターによって順序通りに接続される。
 
 ---
 
@@ -90,9 +88,131 @@ flowchart TB
   status"]
 ```
 
+## Frame（Camera → Perception）
+
+カメラから取得した 1フレーム分の観測データを表す。
+
+- frame_id  
+  フレームを一意に識別するための連番ID。  
+  後続のすべてのデータ（Features / Command / Telemetry）と対応付けるためのキー。
+
+- t_capture_sec  
+  この画像が撮影された時刻。  
+  処理時刻ではなく、観測時刻を表す。
+
+- image  
+  正規化済みの画像データ本体。  
+  色空間や解像度の統一は Camera Module の責務とする。
+
 ---
 
-##
+## Features（Perception → Decision）
+
+画像から抽出された、判断に必要な観測結果を表す。
+
+- frame_id  
+  元になった Frame のID。  
+  Decision やログで Frame と対応付けるために使用する。
+
+- t_capture_sec  
+  元の Frame の撮影時刻。  
+  判断がどれくらい古い情報に基づいているかを知るために引き継ぐ。
+
+- lateral_bias  
+  進行方向に対する左右の偏りを表す値。  
+  正の値は左へ寄りたい、負の値は右へ寄りたいことを意味する。  
+  判断ではなく、あくまで観測結果。
+
+- quality  
+  この観測結果がどれくらい信頼できるかを示す指標。  
+  見えていない・不安定な場合は低くなる。  
+  Decision 側で減速や停止判断に使われる。
+
+- signals  
+  補助的な数値情報。  
+  Perception 内部の詳細な計算結果を必要に応じて外に出すための拡張枠。
+
+- debug  
+  デバッグ・可視化専用の情報。  
+  人間が確認するためのもので、Decision のロジックには使用しない。
+
+- status  
+  Perception 自身による結果の自己評価。  
+  観測が十分かどうかを状態として表す。
+
+---
+
+## Command（Decision → Actuation）
+
+判断結果としての動作指令を表す。
+
+- frame_id  
+  この指令が基づいた Features / Frame のID。  
+  後から判断の根拠を追跡するために使用する。
+
+- t_capture_sec  
+  元になった Frame の撮影時刻。  
+  実行時の遅延を把握するために引き継ぐ。
+
+- steer  
+  操舵方向と量を表す指令。  
+  左右どちらにどれくらい切りたいかを示す抽象的な値。
+
+- throttle  
+  前進量を表す指令。  
+  どれくらいの強さで進みたいかを示す。
+
+- mode  
+  動作モード。  
+  通常走行・減速・停止などの状態を明示する。
+
+- reason  
+  なぜこの指令になったかの説明。  
+  ログやデバッグ用途で使用する。
+
+---
+
+## Telemetry（Actuation → Logger）
+
+実際にどのように指令が適用されたかを表す結果データ。
+
+- frame_id  
+  対応する Command / Frame のID。
+
+- t_capture_sec  
+  元になった Frame の撮影時刻。
+
+- status  
+  指令が正常に適用されたかどうかを示す状態。
+
+- applied_steer  
+  実際に適用された操舵量。  
+  安全制限などにより Command と異なる場合がある。
+
+- applied_throttle  
+  実際に適用された前進量。
+
+---
+
+## ActuationCalibration（設定データ）
+
+抽象的な指令を実機の物理信号に変換するためのルール。
+
+- ステアリング関連の設定  
+  中央位置や左右の最大可動範囲を定義する。
+
+- スロットル関連の設定  
+  停止・最大出力などの基準を定義する。
+
+- 安全制限  
+  操舵量や速度の上限を制限するためのパラメータ。
+
+Calibration は処理中に生成されるものではなく、  
+事前に用意され、Actuation が参照する設定情報である。
+
+---
+
+## コードに書き出したもの
 
 ```py
 # ============================
