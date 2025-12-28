@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-orchestrator_skeleton.py の動作テスト
+orchestrator_skeleton.py の動作テスト（モック環境）
 """
 
 from auto_car_if.orchestrator_skeleton import Orchestrator

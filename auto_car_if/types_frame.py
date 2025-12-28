@@ -10,6 +10,7 @@ from typing import Optional, Protocol, runtime_checkable
 
 class ColorSpace(str, Enum):
     RGB = "RGB"
+    BGR = "BGR"
 
 
 class PixelFormat(str, Enum):
@@ -39,7 +40,7 @@ class ImageBuffer(Protocol):
 class Frame:
     """
     Camera module -> Perception 入力（1フレーム）。
-    - color_space は RGB 固定（前段で正規化する方針）
+    - color_space は RGB/BGR のいずれか（前段で正規化する方針）
     """
     frame_id: int
     t_capture_sec: float

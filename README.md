@@ -124,7 +124,7 @@ orchestrator.run_loop()
 ### テスト実行
 
 ```bash
-python test_orchestrator.py
+python -m tests.test_orchestrator
 ```
 
 モックモジュールを使用したテストが実行され、以下の流れが確認できます：
@@ -136,16 +136,59 @@ python test_orchestrator.py
 ## 7. プロジェクト構成
 
 ```
-auto_car_if/
-  ├── orchestrator_skeleton.py  # メインループ制御
-  ├── protocols.py              # モジュール間のプロトコル定義
-  ├── types_frame.py            # Frame型定義
-  ├── types_features.py         # Features型定義
-  ├── types_command.py          # Command型定義
-  └── types_actuation.py        # Telemetry型定義
-test_orchestrator.py            # 動作確認用テスト
+Automational-Minidcar/
+├── README.md                     # このファイル
+├── regulation.md                 # 大会レギュレーション
+├── auto_car_if/                  # メインパッケージ
+│   ├── orchestrator_skeleton.py  # Orchestrator（メインループ）
+│   ├── protocols.py              # モジュール間のプロトコル定義
+│   ├── types_*.py                # データクラス（Frame, Features, Command, Telemetry等）
+│   ├── camera/                   # 画像取得・正規化モジュール
+│   │   ├── __init__.py
+│   │   └── pi.py                 # PiCameraCV実装（OpenCV）
+│   ├── perception/               # 特徴量抽出モジュール
+│   │   ├── __init__.py
+│   │   └── line.py               # LinePerception実装（ライン検出）
+│   ├── decision/                 # 判断・制御ロジックモジュール
+│   │   ├── __init__.py
+│   │   └── simple.py             # SimpleDecision実装（P制御）
+│   └── actuation/                # PWM信号生成・実機制御モジュール
+│       ├── __init__.py
+│       └── pwm.py                # PWMActuation実装（pigpio）
+├── docs/                         # ドキュメント
+│   └── module_design.md          # モジュール設計詳細
+├── setup/                        # Docker開発環境
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── requirements.txt
+│   ├── .dockerignore
+│   └── README.md                 # Docker環境セットアップガイド
+├── tests/                        # テストスイート
+│   ├── __init__.py
+│   └── test_orchestrator.py      # Orchestratorテスト（モック環境）
+├── examples/                     # 実装例とサンプルコード
+│   ├── __init__.py
+│   └── run_real.py               # 実機実行スクリプト（Pi Zero 2 W + pigpio）
 ```
 
----
+### 実行方法
+
+#### 1. 開発環境でのテスト実行（モック）
+```bash
+python -m tests.test_orchestrator
+```
+モック環境でOrchestrator全体の流れを確認できます。OpenCV/pigpioは不要です。
+
+#### 2. 実機環境での実行
+```bash
+# 前提条件：
+# - Raspberry Pi Zero 2 W上で実行
+# - pigpiod起動済み（sudo pigpiod）
+# - 依存ライブラリがインストール済み（setup/requirements.txt参照）
+
+python examples/run_real.py
+```
+実機用のカメラ・認識・判断・制御が統合されて動作します。
+
 
 © 2024-2025 Automational-Minidcar Team. Developed for 42 Tokyo Minidcar Battle.
