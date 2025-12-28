@@ -177,6 +177,12 @@ Automational-Minidcar/
 │       ├── __init__.py
 │       ├── pwm.py                # PWMActuation実装（pigpio）
 │       └── mock.py                # モック実装
+│   ├── scripts/                  # 実行スクリプト
+│   │   ├── __init__.py
+│   │   └── run.py                # 実機実行スクリプト（Pi Zero 2 W + pigpio）
+│   └── tests/                    # テストスイート
+│       ├── __init__.py
+│       └── test_orchestrator.py  # Orchestratorテスト（モック環境）
 ├── docs/                         # ドキュメント
 │   └── module_design.md          # モジュール設計詳細
 ├── setup/                        # Docker開発環境
@@ -185,12 +191,6 @@ Automational-Minidcar/
 │   ├── requirements.txt
 │   ├── .dockerignore
 │   └── README.md                 # Docker環境セットアップガイド
-├── tests/                        # テストスイート
-│   ├── __init__.py
-│   └── test_orchestrator.py      # Orchestratorテスト（モック環境）
-├── examples/                     # 実装例とサンプルコード
-│   ├── __init__.py
-│   └── run_real.py               # 実機実行スクリプト（Pi Zero 2 W + pigpio）
 ```
 
 ### 実行方法
@@ -223,7 +223,7 @@ make docker-shell    # Dockerコンテナのシェルに接続
 
 ##### 1. 開発環境でのテスト実行（モック）
 ```bash
-python -m tests.test_orchestrator
+python -m auto_car_if.tests.test_orchestrator
 ```
 モック環境でOrchestrator全体の流れを確認できます。OpenCV/pigpioは不要です。
 
@@ -234,7 +234,7 @@ python -m tests.test_orchestrator
 # - pigpiod起動済み（sudo pigpiod）
 # - 依存ライブラリがインストール済み（setup/requirements.txt参照）
 
-python examples/run_real.py
+python -m auto_car_if.scripts.run
 ```
 実機用のカメラ・認識・判断・制御が統合されて動作します。
 

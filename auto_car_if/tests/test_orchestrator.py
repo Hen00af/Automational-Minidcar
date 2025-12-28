@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-orchestrator_skeleton.py の動作テスト（モック環境）
+Orchestratorの動作テスト（モック環境）
 """
 
-from auto_car_if.orchestrator import Orchestrator
-from auto_car_if.domain.frame import Frame, ImageBuffer, ColorSpace, PixelFormat
-from auto_car_if.domain.features import Features, PerceptionStatus
-from auto_car_if.domain.command import Command, DriveMode
-from auto_car_if.domain.actuation import Telemetry, ActuationStatus
+from ..orchestrator import Orchestrator
+from ..domain.frame import Frame, ImageBuffer, ColorSpace, PixelFormat
+from ..domain.features import Features, PerceptionStatus
+from ..domain.command import Command, DriveMode
+from ..domain.actuation import Telemetry, ActuationStatus
 
 
 # ダミー画像バッファクラス
@@ -147,3 +147,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

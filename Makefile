@@ -29,22 +29,22 @@ help: ## このヘルプメッセージを表示
 
 test: ## テストを実行（モック環境）
 	@echo "🧪 テストを実行中..."
-	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) tests.test_orchestrator
+	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) auto_car_if.tests.test_orchestrator
 
 test-verbose: ## 詳細出力でテストを実行
 	@echo "🧪 詳細出力でテストを実行中..."
-	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) tests.test_orchestrator -v
+	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) auto_car_if.tests.test_orchestrator -v
 
 ##@ 実行
 
 run: ## 実機環境で実行（Raspberry Pi用）
 	@echo "🚗 実機環境で実行中..."
 	@echo "⚠️  警告: 車輪を上げてから実行してください"
-	PYTHONPATH=$(shell pwd) $(PYTHON) examples/run_real.py
+	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) auto_car_if.scripts.run
 
 run-mock: ## モック環境で実行（開発用）
 	@echo "🔧 モック環境で実行中..."
-	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) tests.test_orchestrator
+	PYTHONPATH=$(shell pwd) $(PYTHON_MODULE) auto_car_if.tests.test_orchestrator
 
 ##@ クリーンアップ
 

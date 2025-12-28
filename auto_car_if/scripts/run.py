@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import time
 
-from auto_car_if.orchestrator import Orchestrator
-from auto_car_if.camera import PiCameraCV
-from auto_car_if.perception import LinePerception
-from auto_car_if.decision import SimpleDecision
-from auto_car_if.actuation import PWMActuation
+from ..orchestrator import Orchestrator
+from ..camera import PiCameraCV
+from ..perception import LinePerception
+from ..decision import SimpleDecision
+from ..actuation import PWMActuation
 
 
 def main() -> None:
@@ -34,3 +34,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

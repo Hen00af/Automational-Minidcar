@@ -33,7 +33,12 @@ auto_car_if/
 ├── orchestrator/         # Orchestrator（メインループ）
 │   ├── __init__.py
 │   └── orchestrator.py
-└── __init__.py          # パッケージ初期化・エクスポート
+├── scripts/              # 実行スクリプト
+│   ├── __init__.py
+│   └── run.py           # 実機実行スクリプト
+└── tests/                # テストスイート
+    ├── __init__.py
+    └── test_orchestrator.py  # Orchestratorテスト
 ```
 
 ## サブディレクトリの役割
@@ -74,6 +79,14 @@ auto_car_if/
   - `run_once()`: 1フレーム分の処理
   - `run_loop()`: 連続実行ループ
   - `emergency_stop()`: 緊急停止
+
+### `scripts/`
+実行用スクリプト。
+- `run.py`: 実機環境での実行スクリプト（Raspberry Pi用）
+
+### `tests/`
+テストスイート。
+- `test_orchestrator.py`: Orchestratorの統合テスト（モック環境）
 
 ## ルート直下の主なファイル
 
