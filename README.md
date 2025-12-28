@@ -39,6 +39,30 @@
 
 同じコードで、開発環境ではモック、実機環境では実機が動作します。
 
+## 1.2. 将来の拡張（センサーベースへの移行）
+
+現在の実装は**カメラベース**ですが、将来的に**超音波センサーや赤外線センサー**に置き換える可能性があります。
+
+### 現在の実装（カメラベース）
+- `perception/line.py`: カメラ画像からライン検出
+- `camera/`: カメラモジュール（実機/モック）
+
+### 将来の拡張（センサーベース）🔮
+以下の設計が準備済みです：
+
+- **`domain/sensor.py`**: センサーデータの型定義（`SensorReading`, `SensorType`）
+- **`sensor/`**: センサーモジュール（超音波/赤外線用のプロトコルとモック実装）
+- **`perception/sensor.py`**: センサーベースの知覚モジュール（`SensorBasedPerception`）
+- **`interfaces/protocols.py`**: `SensorModule`と`SensorPerception`プロトコル
+
+### センサーベースへの移行方法
+1. `SensorModule`プロトコルを実装（例: `sensor/ultrasonic.py`）
+2. `SensorPerception`プロトコルを実装（例: `perception/sensor.py`を使用）
+3. `Features.signals`フィールドに距離情報を格納
+4. `Decision`モジュールで距離情報を活用
+
+**注意**: 現在のカメラベースの実装はそのまま動作し、センサーベースへの移行は段階的に行えます。
+
 ## 2. ソフトウェアアーキテクチャ
 
 ```mermaid
@@ -205,16 +229,21 @@ Automational-Minidcar/
 │   │   ├── features.py           # Features, PerceptionStatus
 │   │   ├── command.py            # Command, DriveMode
 │   │   ├── vehicle_state.py      # VehicleState
-│   │   └── actuation.py          # ActuationCalibration, Telemetry, ActuationStatus
+│   │   ├── actuation.py          # ActuationCalibration, Telemetry, ActuationStatus
+│   │   └── sensor.py              # SensorReading, SensorType（将来拡張用）
 │   ├── interfaces/               # インターフェース定義
 │   │   └── protocols.py          # モジュール間のプロトコル定義
 │   ├── camera/                   # 画像取得・正規化モジュール
 │   │   ├── __init__.py
 │   │   ├── pi.py                 # PiCameraCV実装（OpenCV）
 │   │   └── mock.py               # モック実装
+│   ├── sensor/                   # 距離センサーモジュール（将来拡張用）
+│   │   ├── __init__.py
+│   │   └── mock.py               # 超音波/赤外線センサーのモック実装
 │   ├── perception/               # 特徴量抽出モジュール
 │   │   ├── __init__.py
-│   │   └── line.py               # LinePerception実装（ライン検出）
+│   │   ├── line.py               # LinePerception実装（ライン検出）
+│   │   └── sensor.py             # SensorBasedPerception実装（将来拡張用）
 │   ├── decision/                 # 判断・制御ロジックモジュール
 │   │   ├── __init__.py
 │   │   └── simple.py             # SimpleDecision実装（P制御）

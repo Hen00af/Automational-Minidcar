@@ -5,6 +5,7 @@ from .features import Features, PerceptionStatus
 from .command import Command, DriveMode
 from .vehicle_state import VehicleState
 from .actuation import ActuationCalibration, Telemetry, ActuationStatus
+from .sensor import SensorReading, SensorType
 
 __all__ = [
     "Frame",
@@ -19,5 +20,7 @@ __all__ = [
     "ActuationCalibration",
     "Telemetry",
     "ActuationStatus",
+    "SensorReading",
+    "SensorType",
 ]
 
