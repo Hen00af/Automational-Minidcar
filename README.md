@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Automational-Minidcar Project
 
 自律走行ミニカーバトルに向けた、モジュール化設計に基づく制御ソフトウェア。
