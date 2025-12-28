@@ -108,7 +108,7 @@ class Telemetry:
 ### 基本的な使い方
 
 ```python
-from auto_car_if.main import Orchestrator
+from auto_car_if.orchestrator import Orchestrator
 
 # 各モジュールを初期化
 camera = CameraModule()      # 実機またはモック
@@ -122,6 +122,17 @@ orchestrator.run_loop()
 ```
 
 ### テスト実行
+
+#### Makefileを使用（推奨）
+
+```bash
+make test        # テストを実行
+make run-mock    # モック環境で実行
+make run         # 実機環境で実行（Raspberry Pi用）
+make help        # すべてのコマンドを表示
+```
+
+#### 直接実行
 
 ```bash
 python -m tests.test_orchestrator
@@ -137,6 +148,7 @@ python -m tests.test_orchestrator
 
 ```
 Automational-Minidcar/
+├── Makefile                      # タスク自動化（makeコマンド用）
 ├── README.md                     # このファイル
 ├── regulation.md                 # 大会レギュレーション
 ├── auto_car_if/                  # メインパッケージ
@@ -182,13 +194,39 @@ Automational-Minidcar/
 
 ### 実行方法
 
-#### 1. 開発環境でのテスト実行（モック）
+#### Makefileを使用（推奨）
+
+```bash
+# ヘルプを表示
+make help
+
+# テスト実行（モック環境）
+make test
+
+# モック環境で実行
+make run-mock
+
+# 実機環境で実行（Raspberry Pi用）
+make run
+
+# クリーンアップ
+make clean
+
+# Docker環境の操作
+make docker-build    # Dockerイメージをビルド
+make docker-up       # Dockerコンテナを起動
+make docker-shell    # Dockerコンテナのシェルに接続
+```
+
+#### 直接実行
+
+##### 1. 開発環境でのテスト実行（モック）
 ```bash
 python -m tests.test_orchestrator
 ```
 モック環境でOrchestrator全体の流れを確認できます。OpenCV/pigpioは不要です。
 
-#### 2. 実機環境での実行
+##### 2. 実機環境での実行
 ```bash
 # 前提条件：
 # - Raspberry Pi Zero 2 W上で実行

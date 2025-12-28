@@ -7,7 +7,7 @@ from .domain import (
     ActuationCalibration, Telemetry, ActuationStatus,
 )
 from .interfaces.protocols import CameraModule, Perception, Decision, Actuation
-from .main import Orchestrator
+from .orchestrator import Orchestrator
 
 # Lazy-load hardware modules (optional dependencies)
 def __getattr__(name):

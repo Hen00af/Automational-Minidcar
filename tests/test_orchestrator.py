@@ -4,7 +4,7 @@
 orchestrator_skeleton.py の動作テスト（モック環境）
 """
 
-from auto_car_if.main import Orchestrator
+from auto_car_if.orchestrator import Orchestrator
 from auto_car_if.domain.frame import Frame, ImageBuffer, ColorSpace, PixelFormat
 from auto_car_if.domain.features import Features, PerceptionStatus
 from auto_car_if.domain.command import Command, DriveMode

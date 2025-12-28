@@ -1,13 +1,13 @@
 # --------------------------------
-# main.py  (run_once / run_loop の骨格：設計レベル)
+# orchestrator.py  (run_once / run_loop の骨格：設計レベル)
 # --------------------------------
 from __future__ import annotations
 
 from typing import Optional
 
-from .interfaces.protocols import CameraModule, Perception, Decision, Actuation
-from .domain.actuation import Telemetry
-from .domain.command import Command, DriveMode
+from ..interfaces.protocols import CameraModule, Perception, Decision, Actuation
+from ..domain.actuation import Telemetry
+from ..domain.command import Command, DriveMode
 
 
 class Orchestrator:

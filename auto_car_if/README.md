@@ -30,7 +30,9 @@ auto_car_if/
 │   ├── __init__.py
 │   ├── pwm.py          # PWMActuation実装（pigpio）
 │   └── mock.py         # モック実装
-├── main.py              # Orchestrator（メインループ・エントリーポイント）
+├── orchestrator/         # Orchestrator（メインループ）
+│   ├── __init__.py
+│   └── orchestrator.py
 └── __init__.py          # パッケージ初期化・エクスポート
 ```
 
@@ -66,9 +68,16 @@ auto_car_if/
 - `pwm.py`: pigpioを使用したPWM制御実装
 - `mock.py`: 開発・テスト用のモック実装
 
+### `orchestrator/`
+全モジュールを統合して実行するオーケストレーター。
+- `orchestrator.py`: `Orchestrator` クラス（メインループ）
+  - `run_once()`: 1フレーム分の処理
+  - `run_loop()`: 連続実行ループ
+  - `emergency_stop()`: 緊急停止
+
 ## ルート直下の主なファイル
 
-- `main.py`: 全モジュールをつなぐ `Orchestrator` クラス（メインループ）
+- `orchestrator/`: 全モジュールをつなぐ `Orchestrator` クラス（メインループ）
 - `__init__.py`: パッケージ初期化・主要クラスのエクスポート
 
 ## 設計思想
@@ -77,6 +86,7 @@ auto_car_if/
 - **ドメインモデル**: `domain/` ディレクトリに型定義を集約
 - **インターフェース**: `interfaces/` ディレクトリにプロトコル定義
 - **実装**: 各機能モジュール（`camera/`, `perception/`, `decision/`, `actuation/`）に実装を分離
+- **オーケストレーション**: `orchestrator/` ディレクトリに統合ロジックを配置
 
 ### モジュール間の結合
 各モジュールは `domain/` の型定義と `interfaces/` のプロトコルにのみ依存し、
@@ -85,7 +95,7 @@ auto_car_if/
 ## 使用例
 
 ```python
-from auto_car_if.main import Orchestrator
+from auto_car_if.orchestrator import Orchestrator
 from auto_car_if.camera import PiCameraCV
 from auto_car_if.perception import LinePerception
 from auto_car_if.decision import SimpleDecision
