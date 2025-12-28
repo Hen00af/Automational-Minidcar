@@ -12,9 +12,9 @@ try:
 except ImportError as exc:  # pragma: no cover - runtime dependency
     raise ImportError("pigpio is required for PWMActuation (install and run pigpiod)") from exc
 
-from ..types_command import Command, DriveMode
-from ..types_actuation import ActuationCalibration, Telemetry, ActuationStatus
-from ..protocols import Actuation
+from ..domain.command import Command, DriveMode
+from ..domain.actuation import ActuationCalibration, Telemetry, ActuationStatus
+from ..interfaces.protocols import Actuation
 
 
 DEFAULT_CALIB = ActuationCalibration(

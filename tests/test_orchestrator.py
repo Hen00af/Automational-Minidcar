@@ -4,11 +4,11 @@
 orchestrator_skeleton.py の動作テスト（モック環境）
 """
 
-from auto_car_if.orchestrator_skeleton import Orchestrator
-from auto_car_if.types_frame import Frame, ImageBuffer, ColorSpace, PixelFormat
-from auto_car_if.types_features import Features, PerceptionStatus
-from auto_car_if.types_command import Command, DriveMode
-from auto_car_if.types_actuation import Telemetry, ActuationStatus
+from auto_car_if.main import Orchestrator
+from auto_car_if.domain.frame import Frame, ImageBuffer, ColorSpace, PixelFormat
+from auto_car_if.domain.features import Features, PerceptionStatus
+from auto_car_if.domain.command import Command, DriveMode
+from auto_car_if.domain.actuation import Telemetry, ActuationStatus
 
 
 # ダミー画像バッファクラス

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import time
 
-from auto_car_if.orchestrator_skeleton import Orchestrator
+from auto_car_if.main import Orchestrator
 from auto_car_if.camera import PiCameraCV
 from auto_car_if.perception import LinePerception
 from auto_car_if.decision import SimpleDecision

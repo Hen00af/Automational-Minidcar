@@ -13,8 +13,8 @@ try:
 except ImportError as exc:  # pragma: no cover - runtime dependency
     raise ImportError("OpenCV (cv2) and numpy are required for LinePerception") from exc
 
-from ..types_frame import Frame
-from ..types_features import Features, PerceptionStatus
+from ..domain.frame import Frame
+from ..domain.features import Features, PerceptionStatus
 
 
 class LinePerception:

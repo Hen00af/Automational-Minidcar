@@ -1,5 +1,5 @@
 # --------------------------------
-# types_actuation.py
+# actuation.py
 # --------------------------------
 from __future__ import annotations
 

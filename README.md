@@ -108,7 +108,7 @@ class Telemetry:
 ### 基本的な使い方
 
 ```python
-from auto_car_if.orchestrator_skeleton import Orchestrator
+from auto_car_if.main import Orchestrator
 
 # 各モジュールを初期化
 camera = CameraModule()      # 実機またはモック
@@ -140,12 +140,20 @@ Automational-Minidcar/
 ├── README.md                     # このファイル
 ├── regulation.md                 # 大会レギュレーション
 ├── auto_car_if/                  # メインパッケージ
-│   ├── orchestrator_skeleton.py  # Orchestrator（メインループ）
-│   ├── protocols.py              # モジュール間のプロトコル定義
-│   ├── types_*.py                # データクラス（Frame, Features, Command, Telemetry等）
+│   ├── main.py                   # Orchestrator（メインループ）
+│   ├── domain/                   # ドメインモデル（型定義）
+│   │   ├── __init__.py
+│   │   ├── frame.py              # Frame, ImageBuffer, ColorSpace, PixelFormat
+│   │   ├── features.py           # Features, PerceptionStatus
+│   │   ├── command.py            # Command, DriveMode
+│   │   ├── vehicle_state.py      # VehicleState
+│   │   └── actuation.py          # ActuationCalibration, Telemetry, ActuationStatus
+│   ├── interfaces/               # インターフェース定義
+│   │   └── protocols.py          # モジュール間のプロトコル定義
 │   ├── camera/                   # 画像取得・正規化モジュール
 │   │   ├── __init__.py
-│   │   └── pi.py                 # PiCameraCV実装（OpenCV）
+│   │   ├── pi.py                 # PiCameraCV実装（OpenCV）
+│   │   └── mock.py               # モック実装
 │   ├── perception/               # 特徴量抽出モジュール
 │   │   ├── __init__.py
 │   │   └── line.py               # LinePerception実装（ライン検出）
@@ -154,7 +162,8 @@ Automational-Minidcar/
 │   │   └── simple.py             # SimpleDecision実装（P制御）
 │   └── actuation/                # PWM信号生成・実機制御モジュール
 │       ├── __init__.py
-│       └── pwm.py                # PWMActuation実装（pigpio）
+│       ├── pwm.py                # PWMActuation実装（pigpio）
+│       └── mock.py                # モック実装
 ├── docs/                         # ドキュメント
 │   └── module_design.md          # モジュール設計詳細
 ├── setup/                        # Docker開発環境

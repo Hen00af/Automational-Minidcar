@@ -13,7 +13,7 @@ try:
 except ImportError as exc:  # pragma: no cover - runtime dependency
     raise ImportError("OpenCV (cv2) is required for PiCameraCV") from exc
 
-from ..types_frame import Frame, ColorSpace, PixelFormat, ImageBuffer
+from ..domain.frame import Frame, ColorSpace, PixelFormat, ImageBuffer
 
 
 class CvImageBuffer(ImageBuffer):

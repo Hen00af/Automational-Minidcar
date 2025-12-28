@@ -1,13 +1,13 @@
 # --------------------------------
-# orchestrator_skeleton.py  (run_once / run_loop の骨格：設計レベル)
+# main.py  (run_once / run_loop の骨格：設計レベル)
 # --------------------------------
 from __future__ import annotations
 
 from typing import Optional
 
-from .protocols import CameraModule, Perception, Decision, Actuation
-from .types_actuation import Telemetry
-from .types_command import Command, DriveMode
+from .interfaces.protocols import CameraModule, Perception, Decision, Actuation
+from .domain.actuation import Telemetry
+from .domain.command import Command, DriveMode
 
 
 class Orchestrator:
@@ -25,9 +25,13 @@ class Orchestrator:
         """
         1フレーム分の処理（例外処理や安全停止ポリシーは必要に応じて追加）。
         """
+        print(f"[Orchestrator] frame_id={getattr(frame, 'frame_id', '?')}, t_capture_sec={getattr(frame, 't_capture_sec', '?')}")
         features = self.perception.process(frame)
+        print(f"[Orchestrator] features: {features}")
         command = self.decision.decide(features)
+        print(f"[Orchestrator] command: {command}")
         telemetry = self.actuation.apply(command)
+        print(f"[Orchestrator] telemetry: {telemetry}\n")
         return telemetry
 
     def run_loop(self) -> None:

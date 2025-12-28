@@ -1,21 +1,15 @@
-# --------------------------------
-# types_frame.py
-# --------------------------------
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Protocol, runtime_checkable
 
-
 class ColorSpace(str, Enum):
     RGB = "RGB"
     BGR = "BGR"
 
-
 class PixelFormat(str, Enum):
     UINT8 = "uint8"
-
 
 @runtime_checkable
 class ImageBuffer(Protocol):
@@ -34,7 +28,6 @@ class ImageBuffer(Protocol):
     @property
     def color_space(self) -> ColorSpace: ...
     def as_bytes(self) -> bytes: ...
-
 
 @dataclass(frozen=True)
 class Frame:

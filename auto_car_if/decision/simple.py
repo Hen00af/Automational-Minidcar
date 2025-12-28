@@ -1,8 +1,8 @@
 """Simple P-controller based decision module."""
 from __future__ import annotations
 
-from ..types_features import Features, PerceptionStatus
-from ..types_command import Command, DriveMode
+from ..domain.features import Features, PerceptionStatus
+from ..domain.command import Command, DriveMode
 
 
 class SimpleDecision:

@@ -1,18 +1,13 @@
-# --------------------------------
-# types_features.py
-# --------------------------------
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping, Optional
 
-
 class PerceptionStatus(str, Enum):
     OK = "OK"
     INSUFFICIENT_SIGNAL = "INSUFFICIENT_SIGNAL"
     INVALID_INPUT = "INVALID_INPUT"
-
 
 @dataclass(frozen=True)
 class Features:
