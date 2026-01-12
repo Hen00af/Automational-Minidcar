@@ -52,6 +52,17 @@ class PWMActuation(Actuation):
         return int(self.calib.steer_center_us + (self.calib.steer_center_us - self.calib.steer_right_us) * steer)
 
     def _map_throttle(self, throttle: float) -> int:
+        # Clamp throttle to valid range
+        # Note: Negative throttle (reverse) is not supported by this ESC-based implementation.
+        # For reverse support, extend ActuationCalibration with throttle_min_us parameter.
+        if throttle < 0.0:
+            import warnings
+            warnings.warn(
+                f"Negative throttle ({throttle}) not supported by PWMActuation. "
+                "Clamping to 0.0. Use CarDriver for reverse support.",
+                UserWarning,
+            )
+            throttle = 0.0
         throttle = max(0.0, min(self.calib.throttle_limit, throttle))
         return int(self.calib.throttle_stop_us + (self.calib.throttle_max_us - self.calib.throttle_stop_us) * throttle)
 

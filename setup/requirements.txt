@@ -11,3 +11,8 @@ numpy==1.24.3
 # その他便利なライブラリ
 pyserial==3.5
 
+# PCA9685 I2C PWM driver and motor control
+adafruit-circuitpython-pca9685>=3.4.0
+adafruit-circuitpython-motor>=3.4.0
+adafruit-blinka>=8.0.0  # CircuitPython compatibility layer for Linux/Raspberry Pi
+

@@ -26,6 +26,7 @@ class PWMActuation(Actuation):
 
     def apply(self, command: Command) -> Telemetry:
         # Just return a dummy Telemetry object
+        # Note: Mock accepts negative throttle values (for reverse) but doesn't enforce limits
         return Telemetry(
             frame_id=command.frame_id,
             t_capture_sec=command.t_capture_sec,
@@ -33,7 +34,7 @@ class PWMActuation(Actuation):
             applied_steer=command.steer,
             applied_throttle=command.throttle,
             steer_pwm_us=1500,
-            throttle_pwm_us=1500,
+            throttle_pwm_us=1500 if command.throttle == 0.0 else (2000 if command.throttle > 0 else 1000),
             message="mocked apply"
         )
 
