@@ -69,7 +69,7 @@ setup/
 
 - **メモリ**: 最低4GB、推奨8GB以上
 - **ディスク容量**: 最低5GBの空き容量
-- **OS**: Windows 10/11、macOS 10.15以降、Linux（Ubuntu 20.04以降推奨）
+- **OS**: Windows 10/11、macOS 10.15以降、Linux（Ubuntu 20.04以降、Debian 13 (trixie)以降推奨）
 
 ## セットアップ手順
 
@@ -93,6 +93,8 @@ sudo systemctl enable docker
 # ユーザーをdockerグループに追加（再ログインが必要）
 sudo usermod -aG docker $USER
 ```
+
+**注意**: Debian 13 (trixie) を使用している場合、`docker-compose-plugin`が利用できない場合は、`docker-compose`を個別にインストールするか、`docker compose`（プラグイン版）を使用してください。
 
 ### 2. プロジェクトの準備
 

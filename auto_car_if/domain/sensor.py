@@ -21,7 +21,7 @@ class SensorReading:
     Attributes:
         reading_id: Unique identifier for this reading
         t_capture_sec: Timestamp when the reading was taken
-        distance_cm: Distance measurement in centimeters (None if invalid)
+        distance_mm: Distance measurement in millimeters (None if invalid)
         sensor_type: Type of sensor (ultrasonic, infrared, etc.)
         sensor_id: Optional identifier for multiple sensors
         quality: Measurement quality/confidence [0.0, 1.0]
@@ -29,7 +29,7 @@ class SensorReading:
     """
     reading_id: int
     t_capture_sec: float
-    distance_cm: Optional[float]  # None if out of range or invalid
+    distance_mm: Optional[float]  # None if out of range or invalid
     sensor_type: SensorType
     sensor_id: Optional[str] = None
     quality: float = 1.0  # [0.0, 1.0]

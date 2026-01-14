@@ -34,7 +34,7 @@ class SensorPerception(Protocol):
     Sensor-based Perception external I/F: SensorReading -> Features
     
     Note: 将来的にカメラからセンサーに置き換える場合に使用。
-    Featuresのsignalsフィールドに距離情報（distance_cm等）を格納する。
+    Featuresのsignalsフィールドに距離情報（distance_mm等）を格納する。
     """
     def process_sensor(self, reading: SensorReading) -> Features:
         ...

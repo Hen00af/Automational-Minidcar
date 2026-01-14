@@ -19,15 +19,15 @@ class UltrasonicSensor(SensorModule):
         self,
         gpio_trigger: int = 23,
         gpio_echo: int = 24,
-        min_distance_cm: float = 2.0,
-        max_distance_cm: float = 400.0,
+        min_distance_mm: float = 20.0,
+        max_distance_mm: float = 4000.0,
     ):
         self.gpio_trigger = gpio_trigger
         self.gpio_echo = gpio_echo
-        self.min_distance_cm = min_distance_cm
-        self.max_distance_cm = max_distance_cm
+        self.min_distance_mm = min_distance_mm
+        self.max_distance_mm = max_distance_mm
         self._reading_id = 0
-        self._simulated_distance = 50.0  # Simulated distance in cm
+        self._simulated_distance = 500.0  # Simulated distance in mm
 
     def readings(self) -> Iterator[SensorReading]:
         """Generate mock sensor readings."""
@@ -39,7 +39,7 @@ class UltrasonicSensor(SensorModule):
             reading = SensorReading(
                 reading_id=self._reading_id,
                 t_capture_sec=t_capture,
-                distance_cm=distance if self.min_distance_cm <= distance <= self.max_distance_cm else None,
+                distance_mm=distance if self.min_distance_mm <= distance <= self.max_distance_mm else None,
                 sensor_type=SensorType.ULTRASONIC,
                 sensor_id="front",
                 quality=1.0 if distance is not None else 0.0,
@@ -52,7 +52,7 @@ class UltrasonicSensor(SensorModule):
             # Simulate sensor reading interval
             time.sleep(0.1)  # 10Hz sampling rate
 
-    def set_simulated_distance(self, distance_cm: float) -> None:
+    def set_simulated_distance(self, distance_mm: float) -> None:
         """Set simulated distance for testing (mock only)."""
-        self._simulated_distance = distance_cm
+        self._simulated_distance = distance_mm
 

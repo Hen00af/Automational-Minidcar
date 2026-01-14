@@ -17,14 +17,14 @@ class SensorBasedPerception(SensorPerception):
     """
     def __init__(
         self,
-        safe_distance_cm: float = 20.0,
-        critical_distance_cm: float = 10.0,
+        safe_distance_mm: float = 200.0,
+        critical_distance_mm: float = 100.0,
         left_sensor_id: str = "left",
         right_sensor_id: str = "right",
         front_sensor_id: str = "front",
     ):
-        self.safe_distance_cm = safe_distance_cm
-        self.critical_distance_cm = critical_distance_cm
+        self.safe_distance_mm = safe_distance_mm
+        self.critical_distance_mm = critical_distance_mm
         self.left_sensor_id = left_sensor_id
         self.right_sensor_id = right_sensor_id
         self.front_sensor_id = front_sensor_id
@@ -46,27 +46,27 @@ class SensorBasedPerception(SensorPerception):
         # Calculate lateral_bias based on left/right sensor difference
         # If only front sensor, use distance to determine behavior
         lateral_bias = 0.0
-        quality = reading.quality if reading.distance_cm is not None else 0.0
+        quality = reading.quality if reading.distance_mm is not None else 0.0
         
         if reading.sensor_id == self.front_sensor_id:
             # Front sensor: use distance to determine if we should slow/stop
-            if reading.distance_cm is None:
+            if reading.distance_mm is None:
                 status = PerceptionStatus.INSUFFICIENT_SIGNAL
-            elif reading.distance_cm < self.critical_distance_cm:
+            elif reading.distance_mm < self.critical_distance_mm:
                 status = PerceptionStatus.INSUFFICIENT_SIGNAL  # Too close, stop
-            elif reading.distance_cm < self.safe_distance_cm:
+            elif reading.distance_mm < self.safe_distance_mm:
                 status = PerceptionStatus.OK  # Close but manageable
             else:
                 status = PerceptionStatus.OK  # Safe distance
         else:
             # Left/Right sensor: calculate lateral bias
-            left_dist = self._recent_readings.get(self.left_sensor_id, reading).distance_cm
-            right_dist = self._recent_readings.get(self.right_sensor_id, reading).distance_cm
+            left_dist = self._recent_readings.get(self.left_sensor_id, reading).distance_mm
+            right_dist = self._recent_readings.get(self.right_sensor_id, reading).distance_mm
             
             if left_dist is not None and right_dist is not None:
                 # Bias towards the side with more distance
                 diff = right_dist - left_dist
-                max_diff = 50.0  # Normalize to [-1, 1]
+                max_diff = 500.0  # Normalize to [-1, 1] (500mm = 50cm)
                 lateral_bias = max(-1.0, min(1.0, diff / max_diff))
                 status = PerceptionStatus.OK
             else:
@@ -74,7 +74,7 @@ class SensorBasedPerception(SensorPerception):
         
         # Store distance in signals for Decision module
         signals = {
-            "distance_cm": reading.distance_cm if reading.distance_cm else 0.0,
+            "distance_mm": reading.distance_mm if reading.distance_mm else 0.0,
             "sensor_type": reading.sensor_type.value,
         }
         
