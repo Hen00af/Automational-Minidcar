@@ -106,6 +106,10 @@ class PWMActuation:
         if self._calib:
             set_us(self._esc_channel, self._calib.throttle_stop_us)
             set_us(self._servo_channel, self._calib.steer_center_us)
+            # ESC初期化待機時間を追加
+            import time
+            from ..config import timing
+            time.sleep(timing.esc_init.NEUTRAL_WAIT)
     
     def _steer_to_us(self, steer: float) -> int:
         """
