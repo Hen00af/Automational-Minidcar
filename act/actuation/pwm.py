@@ -28,7 +28,7 @@ if _is_non_raspberry:
     # 非Raspberry Pi環境ではkudou_testからハードウェアモジュールをインポート
     try:
         # kudou_testディレクトリをパスに追加
-        kudou_test_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'kudou_test')
+        test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'test_code')
         if kudou_test_path not in sys.path:
             sys.path.insert(0, kudou_test_path)
         
