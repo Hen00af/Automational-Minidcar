@@ -1,5 +1,5 @@
 # --------------------------------
-# sensors/mock.py
+# mock/sensors.py
 # TOFセンサーのモック実装（開発・テスト用）
 # --------------------------------
 from __future__ import annotations
@@ -9,7 +9,7 @@ import random
 import time
 from typing import Optional, Tuple
 
-from .tof import TOFReadings
+from ..sensors.tof import TOFReadings
 from ..domain.distance import DistanceData
 
 

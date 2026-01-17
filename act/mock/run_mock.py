@@ -3,10 +3,10 @@
 モック実装でオーケストレーターを実行するスクリプト
 """
 from act.orchestrator import Orchestrator
-from act.sensors import MockTOFSensor
+from act.mock import MockTOFSensor
 from act.perception import WallPositionPerception
 from act.decision import WallFollowDecision
-from act.actuation import MockActuation
+from act.mock import MockActuation
 from act.domain.actuation import ActuationCalibration
 
 

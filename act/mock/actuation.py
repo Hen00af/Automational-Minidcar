@@ -1,5 +1,5 @@
 # --------------------------------
-# actuation/mock.py
+# mock/actuation.py
 # モック実装（開発・テスト用）
 # --------------------------------
 from __future__ import annotations

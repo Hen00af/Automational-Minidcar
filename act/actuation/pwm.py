@@ -29,8 +29,8 @@ def _is_raspberry_pi() -> bool:
 _use_mock = not _is_raspberry_pi()
 
 if _use_mock:
-    # モックモジュールを使用（実際にはmock.pyを使うべきだが、ここでは警告のみ）
-    print("[WARNING] PWM actuation: Not on Raspberry Pi, but using pwm.py. Consider using mock.py", file=sys.stderr)
+    # モックモジュールを使用（実際にはmock/actuation.pyを使うべきだが、ここでは警告のみ）
+    print("[WARNING] PWM actuation: Not on Raspberry Pi, but using pwm.py. Consider using mock/actuation.py", file=sys.stderr)
     # モックモジュールをインポート（kudou_testから）
     try:
         # kudou_testディレクトリをパスに追加
@@ -41,7 +41,7 @@ if _use_mock:
         from hardware_import import board, busio
         from adafruit_pca9685 import PCA9685
     except ImportError:
-        raise ImportError("Cannot import hardware modules. Use mock.py for non-Raspberry Pi environments.")
+        raise ImportError("Cannot import hardware modules. Use mock/actuation.py for non-Raspberry Pi environments.")
 else:
     # 実機モジュールをインポート
     import board

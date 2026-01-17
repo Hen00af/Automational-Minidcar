@@ -1,7 +1,7 @@
 # sensors パッケージ
 # TOFセンサー（距離センサー）の実装モジュール
 
-from .mock import MockTOFSensor
+from ..mock.sensors import MockTOFSensor
 
 # TOFSensorとTOFReadingsは条件付きインポート（ハードウェアモジュールが必要）
 try:

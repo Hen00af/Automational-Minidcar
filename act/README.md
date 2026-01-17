@@ -24,7 +24,6 @@ act/
 │   └── README.md        # configパッケージの詳細説明
 ├── sensors/             # 物理センサー実装
 │   ├── __init__.py
-│   ├── mock.py          # 開発用モック（MockTOFSensor）
 │   └── tof.py           # 実機用（TOFSensor - VL53L0X）
 ├── perception/          # 知覚モジュール実装
 │   ├── __init__.py
@@ -34,13 +33,16 @@ act/
 │   └── wall_follow.py   # 左壁沿いP制御
 ├── actuation/           # 駆動モジュール実装
 │   ├── __init__.py
-│   ├── pwm.py           # pigpioを使用したPWM制御実装
-│   └── mock.py          # 開発・テスト用のモック実装
+│   └── pwm.py           # pigpioを使用したPWM制御実装
+├── mock/                # モック実装
+│   ├── __init__.py
+│   ├── actuation.py     # 開発・テスト用のMockActuation実装
+│   ├── sensors.py       # 開発・テスト用のMockTOFSensor実装
+│   └── run_mock.py      # モック実行スクリプト
 ├── orchestrator/        # オーケストレーター
 │   ├── __init__.py
 │   └── orchestrator.py  # センサー→知覚→判断→駆動のループ
 ├── run.py               # 実機実行スクリプト
-├── run_mock.py          # モック実行スクリプト
 ├── Makefile             # ビルド・実行用Makefile
 └── README.md            # このファイル
 ```
@@ -86,8 +88,8 @@ TOFセンサー（距離センサー）の実装モジュール。
 - **`tof.py`**: 実機用のVL53L0X実装（`TOFSensor`クラス）
   - 3つのVL53L0Xセンサー（前・左・右）をI2Cで制御
   - XSHUTピンを使用してI2Cアドレスを設定
-- **`mock.py`**: 開発・テスト用のモック実装（`MockTOFSensor`クラス）
-  - 固定値、ランダム値、動的変化（時間経過で値が変化）に対応
+
+モック実装は `mock/` ディレクトリに集約しています。
 
 ### `perception/`
 距離データから特徴量を抽出する知覚モジュールの実装。
@@ -112,8 +114,17 @@ TOFセンサー（距離センサー）の実装モジュール。
 - **`pwm.py`**: `PWMActuation`クラス
   - pigpioを使用したPWM制御実装
   - PCA9685を使用してESCとサーボを制御
-- **`mock.py`**: `MockActuation`クラス
-  - 開発・テスト用のモック実装（実際のハードウェアは使用しない）
+
+開発・テスト用のモック実装は `mock/actuation.py` に移動しています。
+
+### `mock/`
+開発・テスト用のモック実装とスクリプトを集約したディレクトリ。
+
+- **`sensors.py`**: `MockTOFSensor`クラス
+  - 固定値、ランダム値、動的変化（時間経過で値が変化）に対応
+- **`actuation.py`**: `MockActuation`クラス
+  - 実際のハードウェアは使用せず、`set_us()`の動作をシミュレート
+- **`run_mock.py`**: モック実行スクリプト
 
 ### `orchestrator/`
 全モジュールを統合して実行するオーケストレーター。
@@ -136,7 +147,7 @@ make mock_run
 make run_mock
 
 # 直接実行
-python3 run_mock.py
+python3 mock/run_mock.py
 ```
 
 ### 実機モード（Raspberry Pi）
@@ -166,10 +177,12 @@ make clean     # Pythonキャッシュファイルを削除
 
 ```python
 from act.orchestrator import Orchestrator
-from act.sensors import TOFSensor, MockTOFSensor
+from act.sensors import TOFSensor
+from act.mock import MockTOFSensor
 from act.perception import WallPositionPerception
 from act.decision import WallFollowDecision
-from act.actuation import PWMActuation, MockActuation
+from act.actuation import PWMActuation
+from act.mock import MockActuation
 from act.domain.actuation import ActuationCalibration
 
 # モックモードの場合

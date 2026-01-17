@@ -7,7 +7,7 @@ PYTHON := python3
 # スクリプトのパス
 SCRIPT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 PROJECT_ROOT := $(abspath $(SCRIPT_DIR)..)
-MOCK_SCRIPT := $(SCRIPT_DIR)run_mock.py
+MOCK_SCRIPT := $(SCRIPT_DIR)mock/run_mock.py
 RUN_SCRIPT := $(SCRIPT_DIR)run.py
 
 help:
