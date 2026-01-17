@@ -1,229 +1,249 @@
-# act パッケージ構成（TOFセンサー版）
+# act パッケージ
 
-このディレクトリは、TOFセンサーを用いたミニカー自律走行システムの「インターフェース・制御中核」を担うパッケージです。左側の壁との距離を一定に保つ（左手法/Wall Following）アルゴリズムを主眼に置いています。
+TOFセンサーを用いたミニカー自律走行システムの「インターフェース・制御中核」を担うパッケージです。左側の壁との距離を一定に保つ（左手法/Wall Following）アルゴリズムを実装しています。
 
 ## ディレクトリ構造
-
-カメラ関連（camera, frame）を削除し、センサー関連（sensors, distance）に置き換えました。
 
 ```text
 act/
 ├── domain/              # ドメインモデル（型定義）
 │   ├── __init__.py
-│   ├── distance.py      # [New] DistanceData (Front, Left, Right)
+│   ├── distance.py      # DistanceData (Front, Left, Right)
 │   ├── features.py      # WallFeatures, GapError
 │   ├── command.py       # Command, DriveMode
 │   └── actuation.py     # ActuationStatus, ActuationCalibration, Telemetry
 ├── interfaces/          # インターフェース定義
 │   ├── __init__.py
-│   └── protocols.py    # DistanceSensorModule, Perception, Decision, Actuation
-├── sensors/             # [New] 物理センサー実装
+│   └── protocols.py     # DistanceSensorModule, Perception, Decision, Actuation
+├── config/              # 設定・ユーティリティ
 │   ├── __init__.py
-│   ├── tof_mock.py      # 開発用モック
-│   └── tof_vl53l0x.py   # 実機用（VL53L0X等）
+│   ├── hardware.py      # PCA9685、ESC、サーボの設定定数
+│   ├── sensors.py       # VL53L0X距離センサーの設定定数
+│   ├── timing.py        # タイミング関連の設定定数
+│   ├── utils.py         # set_us()などのユーティリティ関数
+│   └── README.md        # configパッケージの詳細説明
+├── sensors/             # 物理センサー実装
+│   ├── __init__.py
+│   ├── mock.py          # 開発用モック（MockTOFSensor）
+│   └── tof.py           # 実機用（TOFSensor - VL53L0X）
 ├── perception/          # 知覚モジュール実装
 │   ├── __init__.py
-│   └── wall_position.py # [New] 距離データから壁の位置関係を特定
+│   └── wall_position.py # 距離データから壁の位置関係を特定
 ├── decision/            # 判断モジュール実装
 │   ├── __init__.py
-│   └── wall_follow.py   # [New] 左壁沿いP/PD制御
+│   └── wall_follow.py   # 左壁沿いP制御
 ├── actuation/           # 駆動モジュール実装
 │   ├── __init__.py
-│   ├── pwm.py          
-│   └── mock.py
-├── orchestrator/         # オーケストレーター
+│   ├── pwm.py           # pigpioを使用したPWM制御実装
+│   └── mock.py          # 開発・テスト用のモック実装
+├── orchestrator/        # オーケストレーター
 │   ├── __init__.py
 │   └── orchestrator.py  # センサー→知覚→判断→駆動のループ
-└── README.md
+├── run.py               # 実機実行スクリプト
+├── run_mock.py          # モック実行スクリプト
+├── Makefile             # ビルド・実行用Makefile
+└── README.md            # このファイル
 ```
 
 ## サブディレクトリの役割
 
 ### `domain/`
 ドメインモデル（型定義）を集約したディレクトリ。各モジュール間でやり取りするデータ構造を定義します。
-- `distance.py`: TOFセンサーから取得した距離データの型定義
-- `features.py`: 知覚モジュールが抽出した特徴量の型定義（壁との誤差、前方障害物有無など）
-- `command.py`: 判断モジュールが生成する制御コマンドの型定義
-- `actuation.py`: 駆動モジュールのキャリブレーションとテレメトリの型定義
+
+- **`distance.py`**: TOFセンサーから取得した距離データの型定義
+  - `DistanceData`: 前・左・右の距離データ（タイムスタンプ付き）
+- **`features.py`**: 知覚モジュールが抽出した特徴量の型定義
+  - `WallFeatures`: 壁との誤差、前方障害物有無、左コーナー判定など
+- **`command.py`**: 判断モジュールが生成する制御コマンドの型定義
+  - `Command`: ステアリング、スロットル、走行モード
+  - `DriveMode`: RUN, SLOW, STOP
+- **`actuation.py`**: 駆動モジュールのキャリブレーションとテレメトリの型定義
+  - `ActuationCalibration`: PWM値への変換設定
+  - `Telemetry`: 駆動結果のテレメトリ
 
 ### `interfaces/`
 各モジュール間のインターフェース（プロトコル）を定義します。
-- `protocols.py`: `DistanceSensorModule`, `Perception`, `Decision`, `Actuation` のプロトコル定義
+
+- **`protocols.py`**: 以下のプロトコル定義
+  - `DistanceSensorModule`: 距離センサーのインターフェース
+  - `Perception`: 知覚モジュールのインターフェース
+  - `Decision`: 判断モジュールのインターフェース
+  - `Actuation`: 駆動モジュールのインターフェース
+
+### `config/`
+ハードウェア設定とユーティリティ関数を提供するパッケージ。
+
+- **`hardware.py`**: PCA9685、ESC、サーボの設定定数
+- **`sensors.py`**: VL53L0X距離センサーの設定定数
+- **`timing.py`**: タイミング関連の設定定数
+- **`utils.py`**: `set_us()`などのユーティリティ関数
+
+詳細は `config/README.md` を参照してください。
 
 ### `sensors/`
 TOFセンサー（距離センサー）の実装モジュール。
-- `tof_mock.py`: 開発・テスト用のモック実装
-- `tof_vl53l0x.py`: 実機用のVL53L0X等の実装
+
+- **`tof.py`**: 実機用のVL53L0X実装（`TOFSensor`クラス）
+  - 3つのVL53L0Xセンサー（前・左・右）をI2Cで制御
+  - XSHUTピンを使用してI2Cアドレスを設定
+- **`mock.py`**: 開発・テスト用のモック実装（`MockTOFSensor`クラス）
+  - 固定値、ランダム値、動的変化（時間経過で値が変化）に対応
 
 ### `perception/`
 距離データから特徴量を抽出する知覚モジュールの実装。
-- `wall_position.py`: 距離データから壁の位置関係を特定する実装
+
+- **`wall_position.py`**: `WallPositionPerception`クラス
+  - 左壁との距離誤差を計算（目標距離からのズレ）
+  - 前方の壁判定（閾値以内なら壁あり）
+  - 左側のコーナー判定（距離が閾値以上なら壁がない）
 
 ### `decision/`
 特徴量から操舵・速度を決定する判断モジュールの実装。
-- `wall_follow.py`: 左壁沿い走行のP/PD制御による判断実装
+
+- **`wall_follow.py`**: `WallFollowDecision`クラス
+  - 左壁沿い走行のP制御（比例制御）
+  - 前方に壁がある場合：停止または右折
+  - 左コーナーの場合：左折
+  - 通常時：誤差に比例してステアリングを調整
 
 ### `actuation/`
 コマンドを物理信号（PWM等）に変換・出力する駆動モジュールの実装。
-- `pwm.py`: pigpioを使用したPWM制御実装
-- `mock.py`: 開発・テスト用のモック実装
+
+- **`pwm.py`**: `PWMActuation`クラス
+  - pigpioを使用したPWM制御実装
+  - PCA9685を使用してESCとサーボを制御
+- **`mock.py`**: `MockActuation`クラス
+  - 開発・テスト用のモック実装（実際のハードウェアは使用しない）
 
 ### `orchestrator/`
 全モジュールを統合して実行するオーケストレーター。
-- `orchestrator.py`: `Orchestrator` クラス（メインループ）
-  - `run_once()`: 1サイクル分の処理
-  - `run_loop()`: 連続実行ループ
+
+- **`orchestrator.py`**: `Orchestrator`クラス
+  - `run_once()`: 1サイクル分の処理（計測→知覚→判断→実行）
+  - `run_loop()`: 連続実行ループ（ループ間隔・ログ間隔を設定可能）
   - `emergency_stop()`: 緊急停止
 
-## 主な変更点の詳細
+## 実行方法
 
-### 1. domain/ (データ定義の変更)
+### モックモード（開発・テスト用）
 
-画像フレームの代わりに、3方向の距離データを定義します。
+ハードウェアなしで動作を確認できます。
 
-#### domain/distance.py (新規)
+```bash
+# Makefileを使用
+make mock_run
+# または
+make run_mock
 
-```python
-from dataclasses import dataclass
-
-@dataclass
-class DistanceData:
-    front_mm: float  # 前方距離 (mm)
-    left_mm: float   # 左方距離 (mm)
-    right_mm: float  # 右方距離 (mm)
-    timestamp: float
+# 直接実行
+python3 run_mock.py
 ```
 
-#### domain/features.py (変更)
+### 実機モード（Raspberry Pi）
 
-知覚の結果として、「壁との誤差」や「前方の障害物有無」を定義します。
+実機のハードウェアを使用して実行します。
 
-```python
-from dataclasses import dataclass
+```bash
+# Makefileを使用
+make run
 
-@dataclass
-class WallFeatures:
-    error_from_target: float  # 目標距離とのズレ（正なら離れすぎ、負なら近すぎ）
-    is_front_blocked: bool    # 前方に壁があるか（右折・停止判断用）
-    is_corner_left: bool      # 左に壁がなくなったか（左折判断用）
+# 直接実行
+python3 run.py
 ```
 
-### 2. interfaces/ (プロトコルの変更)
+### Makefileコマンド
 
-カメラの代わりに距離センサー用のプロトコルを定義します。
-
-#### interfaces/protocols.py
-
-```python
-from typing import Protocol
-from act.domain.distance import DistanceData
-from act.domain.features import WallFeatures
-from act.domain.command import Command
-
-class DistanceSensorModule(Protocol):
-    def read(self) -> DistanceData:
-        """3方向の距離を計測して返す"""
-        ...
-
-class Perception(Protocol):
-    def analyze(self, data: DistanceData) -> WallFeatures:
-        """生の距離データから状況（特徴量）を抽出する"""
-        ...
-
-class Decision(Protocol):
-    def decide(self, features: WallFeatures) -> Command:
-        """状況に基づいてハンドル・アクセルを決定する"""
-        ...
+```bash
+make help      # 利用可能なコマンドを表示
+make mock_run  # モックモードで実行
+make run       # 実機モードで実行
+make clean     # Pythonキャッシュファイルを削除
 ```
 
-### 3. perception/ (知覚ロジック)
+## 使用例
 
-生の距離データを扱いやすい形に変換します。例えば、センサーエラー（極端な外れ値）の除去や、目標値との差分計算をここで行います。
-
-#### perception/wall_position.py
+### 基本的な使用例
 
 ```python
-class WallPositionPerception:
-    def __init__(self, target_distance_mm: float = 200.0):
-        self.target = target_distance_mm
+from act.orchestrator import Orchestrator
+from act.sensors import TOFSensor, MockTOFSensor
+from act.perception import WallPositionPerception
+from act.decision import WallFollowDecision
+from act.actuation import PWMActuation, MockActuation
+from act.domain.actuation import ActuationCalibration
 
-    def analyze(self, data: DistanceData) -> WallFeatures:
-        # 左壁との距離誤差（P制御の入力値になる）
-        error = data.left_mm - self.target
-        
-        # 前方の壁判定 (例: 15cm以内なら壁あり)
-        front_blocked = data.front_mm < 150.0
-        
-        return WallFeatures(
-            error_from_target=error,
-            is_front_blocked=front_blocked,
-            is_corner_left=(data.left_mm > 1000) # 左が開放されたらコーナーかも
-        )
+# モックモードの場合
+sensor = MockTOFSensor(
+    left_distance=200,  # 目標距離に設定
+    front_distance=500,
+    right_distance=300,
+    use_dynamic=True  # 時間経過で値が変化
+)
+perception = WallPositionPerception(target_distance_mm=200.0)
+decision = WallFollowDecision(kp=0.03, base_speed=0.5)
+actuation = MockActuation()
+
+# キャリブレーションを設定
+calib = ActuationCalibration(
+    steer_center_us=1500,  # 中央
+    steer_left_us=1300,    # 左（steer=+1.0）
+    steer_right_us=1700,   # 右（steer=-1.0）
+    throttle_stop_us=1500, # 停止
+    throttle_max_us=1600   # 最大（throttle=+1.0）
+)
+actuation.configure(calib)
+
+# Orchestratorで統合実行
+orchestrator = Orchestrator(sensor, perception, decision, actuation)
+orchestrator.run_loop(loop_interval_sec=0.1, log_interval_sec=1.0)
 ```
 
-### 4. decision/ (制御ロジック)
-
-ここが「左壁沿い走行」の肝になります。
-
-#### decision/wall_follow.py
+### 実機モードの場合
 
 ```python
-from act.domain.command import Command, DriveMode
+from act.orchestrator import Orchestrator
+from act.sensors import TOFSensor
+from act.perception import WallPositionPerception
+from act.decision import WallFollowDecision
+from act.actuation import PWMActuation
 
-class WallFollowDecision:
-    def __init__(self, kp: float = 0.5):
-        self.kp = kp  # Pゲイン
+# 実機実装を使用
+sensor = TOFSensor()
+perception = WallPositionPerception(target_distance_mm=200.0)
+decision = WallFollowDecision(kp=0.03, base_speed=0.5)
+actuation = PWMActuation()
 
-    def decide(self, features: WallFeatures) -> Command:
-        # 1. 緊急回避：前に壁があったら止まる or 右旋回
-        if features.is_front_blocked:
-            return Command(mode=DriveMode.BRAKE, speed=0, steering=0)
-            # または右折: return Command(mode=DriveMode.FORWARD, speed=20, steering=1.0)
-
-        # 2. 壁沿い制御（P制御）
-        # errorが正（壁から離れすぎ） -> 左に切りたい -> steeringをマイナス（またはプラス、機構による）
-        # errorが負（壁に近すぎ） -> 右に切りたい
-        
-        # 例: ステアリング -1.0(左) ～ 1.0(右) とする場合
-        # 離れすぎ(error > 0) -> 近づくために左(-1.0)へ
-        steering = -(features.error_from_target * self.kp)
-        
-        # クランプ処理 (-1.0 ~ 1.0 に収める)
-        steering = max(min(steering, 1.0), -1.0)
-
-        return Command(
-            mode=DriveMode.FORWARD,
-            speed=50,  # 一定速度
-            steering=steering
-        )
+# Orchestratorで統合実行
+orchestrator = Orchestrator(sensor, perception, decision, actuation)
+try:
+    orchestrator.run_loop()
+except KeyboardInterrupt:
+    print("\nStopped by user")
+finally:
+    actuation.close()
 ```
 
-### 5. orchestrator/ (実行ループ)
+## データフロー
 
-カメラではなくセンサーをトリガーにします。
-
-#### orchestrator/orchestrator.py
-
-```python
-class Orchestrator:
-    def __init__(self, sensor: DistanceSensorModule, perception, decision, actuation):
-        self.sensor = sensor
-        self.perception = perception
-        self.decision = decision
-        self.actuation = actuation
-
-    def run_once(self):
-        # 1. 計測 (Measure)
-        distance_data = self.sensor.read()
-        
-        # 2. 知覚 (Perceive)
-        features = self.perception.analyze(distance_data)
-        
-        # 3. 判断 (Decide)
-        command = self.decision.decide(features)
-        
-        # 4. 実行 (Act)
-        self.actuation.apply(command)
+```
+┌─────────────┐
+│   Sensor    │  DistanceData (front, left, right, timestamp)
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Perception  │  WallFeatures (error_from_target, is_front_blocked, is_corner_left)
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  Decision   │  Command (steer, throttle, mode, reason)
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  Actuation  │  Telemetry (status, applied_steer, applied_throttle, steer_pwm_us, throttle_pwm_us)
+└─────────────┘
 ```
 
 ## 設計思想
@@ -237,29 +257,40 @@ class Orchestrator:
 ### モジュール間の結合
 各モジュールは `domain/` の型定義と `interfaces/` のプロトコルにのみ依存し、実装の詳細には依存しません。これにより、各モジュールを独立して開発・テストできます。
 
-## 使用例
-
-```python
-from act.orchestrator import Orchestrator
-from act.sensors import TOFVL53L0X
-from act.perception import WallPositionPerception
-from act.decision import WallFollowDecision
-from act.actuation import PWMActuation
-
-# 各モジュールを初期化
-sensor = TOFVL53L0X()
-perception = WallPositionPerception(target_distance_mm=200.0)
-decision = WallFollowDecision(kp=0.5)
-actuation = PWMActuation()
-
-# Orchestratorで統合実行
-orchestrator = Orchestrator(sensor, perception, decision, actuation)
-orchestrator.run_loop()
-```
+### モック実装
+各モジュールにはモック実装が用意されており、ハードウェアなしで開発・テストが可能です。
 
 ## 開発・運用のポイント
 
-- **型定義の変更**: `domain/` ディレクトリ内のファイルを編集
-- **新しい実装の追加**: 対応するモジュールディレクトリ（`sensors/`, `perception/` 等）に新しい実装ファイルを追加
-- **インターフェースの拡張**: `interfaces/protocols.py` でプロトコルを定義・拡張
-- **モック実装**: 開発・テスト時は各モジュールの `mock.py` を使用可能
+### 型定義の変更
+`domain/` ディレクトリ内のファイルを編集します。変更時は関連するモジュールへの影響を確認してください。
+
+### 新しい実装の追加
+対応するモジュールディレクトリ（`sensors/`, `perception/`, `decision/`, `actuation/`）に新しい実装ファイルを追加します。インターフェースプロトコルに適合するように実装してください。
+
+### インターフェースの拡張
+`interfaces/protocols.py` でプロトコルを定義・拡張します。既存の実装への影響を確認してください。
+
+### 設定の変更
+`config/` ディレクトリ内のファイルで設定を変更します。詳細は `config/README.md` を参照してください。
+
+### パラメータ調整
+- **知覚モジュール**: `WallPositionPerception` の `target_distance_mm`、`front_blocked_threshold_mm`、`corner_left_threshold_mm`
+- **判断モジュール**: `WallFollowDecision` の `kp`（Pゲイン）、`base_speed`、各種閾値
+- **駆動モジュール**: `ActuationCalibration` のPWM値設定
+
+## トラブルシューティング
+
+### モックモードで実行できない
+- Pythonのパスが正しく設定されているか確認してください
+- `PYTHONPATH` 環境変数を設定するか、`Makefile` を使用してください
+
+### 実機モードでセンサーが動作しない
+- Raspberry Pi環境であることを確認してください
+- I2Cが有効になっているか確認してください
+- センサーの接続とXSHUTピンの設定を確認してください
+
+### 制御が不安定
+- Pゲイン（`kp`）を調整してください
+- ループ間隔（`loop_interval_sec`）を調整してください
+- センサーの読み取り値にノイズがないか確認してください

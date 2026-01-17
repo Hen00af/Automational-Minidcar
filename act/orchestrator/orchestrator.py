@@ -67,8 +67,11 @@ class Orchestrator:
             log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは1.0秒
         """
         import time
+        start_time = time.time()
         iteration = 0
         last_log_time = 0.0
+        header_printed = False
+        
         try:
             while max_iterations is None or iteration < max_iterations:
                 distance_data = self.sensor.read()
@@ -76,11 +79,17 @@ class Orchestrator:
                 command = self.decision.decide(features)
                 telemetry = self.actuation.apply(command)
                 
+                # ヘッダーを一度だけ出力
+                if not header_printed:
+                    print("TIME  | L_DIST | ERROR | STEER | THROTTLE | STATUS")
+                    header_printed = True
+                
                 # 詳細ログ出力（一定間隔で）
                 current_time = time.time()
                 iteration += 1
                 if current_time - last_log_time >= log_interval_sec:
-                    self._log_cycle(iteration, distance_data, features, command, telemetry)
+                    elapsed_time = current_time - start_time
+                    self._log_cycle(elapsed_time, distance_data, features, command, telemetry)
                     last_log_time = current_time
                 
                 if loop_interval_sec > 0:
@@ -94,37 +103,38 @@ class Orchestrator:
     
     def _log_cycle(
         self,
-        iteration: int,
+        elapsed_time: float,
         distance_data,
         features,
         command,
         telemetry
     ) -> None:
         """
-        1サイクルの詳細情報をログ出力
+        1サイクルの詳細情報をログ出力（パイプ区切りのテーブル形式）
         
         Args:
-            iteration: イテレーション番号
+            elapsed_time: ループ開始からの経過時間（秒）
             distance_data: センサーデータ
             features: 知覚結果
             command: 判断結果
             telemetry: 駆動結果
         """
-        # 知覚結果
-        error_str = f"{features.error_from_target:+.1f}mm"
-        front_str = "壁あり" if features.is_front_blocked else "壁なし"
-        corner_str = "コーナー" if features.is_corner_left else "通常"
-        
-        # 判断結果
-        mode_str = command.mode.value if hasattr(command.mode, 'value') else str(command.mode)
-        reason_str = f"({command.reason})" if command.reason else ""
-        
-        # 駆動結果
+        # データ取得
+        timestamp = elapsed_time
+        l_dist = distance_data.left_mm
+        error = features.error_from_target
+        steer = command.steer
+        speed = command.throttle
         status_str = telemetry.status.value if hasattr(telemetry.status, 'value') else str(telemetry.status)
         
-        print(f"[CYCLE #{iteration}] 知覚: 誤差={error_str}, 前方={front_str}, 左={corner_str} | "
-              f"判断: モード={mode_str} {reason_str}, ステア={command.steer:+.2f}, スロットル={command.throttle:.2f} | "
-              f"駆動: {status_str}")
+        # パイプ区切りのテーブル形式で出力
+        # TIME: 5文字幅（右寄せ）、小数点1桁 + "s"
+        # L_DIST: 4文字幅（右寄せ） + "mm"
+        # ERROR: 4文字幅（右寄せ）、符号付き + "mm"
+        # STEER: 5文字幅（右寄せ）、符号付き、小数点2桁
+        # THROTTLE: 6文字幅（右寄せ）、小数点2桁 + 空白調整
+        # STATUS: そのまま文字列
+        print(f"{timestamp:>5.1f}s | {l_dist:>4.0f}mm | {error:>+4.0f}mm | {steer:>+5.2f} | {speed:>6.2f}   | {status_str}")
     
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
         """

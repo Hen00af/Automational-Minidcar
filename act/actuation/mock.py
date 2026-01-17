@@ -15,12 +15,13 @@ from ..config import hardware, set_us
 
 class MockChannel:
     """モックチャンネルオブジェクト（set_us()関数で使用）"""
-    def __init__(self, name: str, log_interval_sec: float = 1.0):
+    def __init__(self, name: str, log_interval_sec: float = 1.0, verbose: bool = False):
         self.name = name
         self._duty_cycle = 0
         self._log_interval_sec = log_interval_sec
         self._last_log_time = 0.0
         self._update_count = 0
+        self._verbose = verbose
     
     @property
     def duty_cycle(self) -> int:
@@ -33,7 +34,7 @@ class MockChannel:
         
         # ログ出力頻度を制限（一定時間ごとに出力）
         current_time = time.time()
-        if current_time - self._last_log_time >= self._log_interval_sec:
+        if self._verbose and current_time - self._last_log_time >= self._log_interval_sec:
             us = int(value / hardware.pca9685.DUTY_CYCLE_MAX_VALUE * hardware.pca9685.PWM_PERIOD_US)
             print(f"[MOCK] set_us({self.name}, {us}μs)  # duty_cycle={value} (updates: {self._update_count})")
             self._last_log_time = current_time
@@ -45,12 +46,18 @@ class MockActuation:
     func_explain.md の set_us() 関数の動作をシミュレート
     """
     
-    def __init__(self):
-        """初期化"""
+    def __init__(self, verbose: bool = False):
+        """
+        初期化
+        
+        Args:
+            verbose: Trueの場合、詳細ログを出力する。デフォルトはFalse
+        """
         self._calib: Optional[ActuationCalibration] = None
+        self._verbose = verbose
         # モックチャンネルオブジェクトを作成
-        self._esc_channel = MockChannel("esc")
-        self._servo_channel = MockChannel("servo")
+        self._esc_channel = MockChannel("esc", verbose=verbose)
+        self._servo_channel = MockChannel("servo", verbose=verbose)
     
     def configure(self, calib: ActuationCalibration) -> None:
         """
@@ -60,9 +67,10 @@ class MockActuation:
             calib: キャリブレーションパラメータ
         """
         self._calib = calib
-        print(f"[MOCK] Actuation configured:")
-        print(f"  Steer: center={calib.steer_center_us}μs, left={calib.steer_left_us}μs, right={calib.steer_right_us}μs")
-        print(f"  Throttle: stop={calib.throttle_stop_us}μs, max={calib.throttle_max_us}μs")
+        if self._verbose:
+            print(f"[MOCK] Actuation configured:")
+            print(f"  Steer: center={calib.steer_center_us}μs, left={calib.steer_left_us}μs, right={calib.steer_right_us}μs")
+            print(f"  Throttle: stop={calib.throttle_stop_us}μs, max={calib.throttle_max_us}μs")
     
     def _steer_to_us(self, steer: float) -> int:
         """
@@ -154,7 +162,7 @@ class MockActuation:
             current_time = time.time()
             if not hasattr(self, '_last_command_log_time'):
                 self._last_command_log_time = 0.0
-            if current_time - self._last_command_log_time >= 1.0:
+            if self._verbose and current_time - self._last_command_log_time >= 1.0:
                 mode_str = command.mode.value if hasattr(command.mode, 'value') else str(command.mode)
                 print(f"[MOCK] Command (frame #{command.frame_id}): mode={mode_str}, steer={applied_steer:.2f}, throttle={applied_throttle:.2f}, reason={command.reason}")
                 self._last_command_log_time = current_time

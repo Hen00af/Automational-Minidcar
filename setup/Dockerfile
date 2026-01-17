@@ -15,9 +15,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     vim \
     nano \
+    sudo \
+    zsh \
     libopencv-dev \
     python3-opencv \
     && rm -rf /var/lib/apt/lists/*
+
+# piユーザーにsudo権限を付与
+RUN usermod -aG sudo pi && \
+    echo "pi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # 作業ディレクトリの作成
 RUN mkdir -p /home/pi/code/togikai_function && \

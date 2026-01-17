@@ -48,43 +48,17 @@ else:
     import busio
     from adafruit_pca9685 import PCA9685
 
-from ..types_command import Command, DriveMode
-from ..types_actuation import ActuationCalibration, Telemetry, ActuationStatus
-from ..protocols import Actuation
+from ..domain.command import Command, DriveMode
+from ..domain.actuation import ActuationCalibration, Telemetry, ActuationStatus
+from ..interfaces.protocols import Actuation
 
-# const.py から定数をインポート
-import sys
-import os
-_act_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _act_root not in sys.path:
-    sys.path.insert(0, _act_root)
+# config から定数と関数をインポート
+from ..config import hardware, set_us
 
-try:
-    import const
-    PCA9685_FREQUENCY = const.PCA9685_FREQUENCY
-    CH_ESC = const.CH_ESC
-    CH_SERVO = const.CH_SERVO
-    PWM_PERIOD_US = const.PWM_PERIOD_US
-    DUTY_CYCLE_MAX_VALUE = const.DUTY_CYCLE_MAX_VALUE
-except (ImportError, AttributeError):
-    # フォールバック: 定数を直接定義（func_explain.md と const.py から）
-    PCA9685_FREQUENCY = 50
-    CH_ESC = 0
-    CH_SERVO = 1
-    PWM_PERIOD_US = 20000  # 20ms = 20000μs @ 50Hz
-    DUTY_CYCLE_MAX_VALUE = 65535  # 16bit
-
-
-def set_us(ch, us: int) -> None:
-    """
-    μs（マイクロ秒）をduty_cycle値に変換してPCA9685のチャンネルに設定する関数。
-    
-    Args:
-        ch: PCA9685のチャンネルオブジェクト
-        us: パルス幅（マイクロ秒）
-    """
-    duty_cycle = int(us / PWM_PERIOD_US * DUTY_CYCLE_MAX_VALUE)
-    ch.duty_cycle = duty_cycle
+# 定数をローカル変数として定義（後方互換性のため）
+PCA9685_FREQUENCY = hardware.pca9685.FREQUENCY
+CH_ESC = hardware.pca9685.CH_ESC
+CH_SERVO = hardware.pca9685.CH_SERVO
 
 
 class PWMActuation:

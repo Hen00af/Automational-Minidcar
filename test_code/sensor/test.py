@@ -1,7 +1,6 @@
 import time
-import board
-import busio
-import digitalio
+# ハードウェアモジュールの自動インポート（Raspberry Pi環境では実機、それ以外ではモック）
+from hardware_import import board, busio, digitalio
 import adafruit_vl53l0x
 
 # --- 設定：各センサーのXSHUTピンを繋ぐGPIO番号 ---

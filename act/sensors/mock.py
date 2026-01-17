@@ -29,7 +29,8 @@ class MockTOFSensor:
         use_random: bool = False,
         random_range: Tuple[int, int] = (50, 2000),
         log_interval_sec: float = 1.0,
-        use_dynamic: bool = False
+        use_dynamic: bool = False,
+        verbose: bool = False
     ):
         """
         初期化
@@ -44,6 +45,7 @@ class MockTOFSensor:
             random_range: ランダム値の範囲（最小値、最大値）mm
             log_interval_sec: ログ出力間隔（秒）。デフォルトは1.0秒
             use_dynamic: Trueの場合、時間経過で値が変化する動的モックを使用
+            verbose: Trueの場合、詳細ログを出力する。デフォルトはFalse
         """
         self.xshut_pins = xshut_pins
         self.i2c_addresses = i2c_addresses
@@ -61,15 +63,17 @@ class MockTOFSensor:
         self._base_left = left_distance if left_distance is not None else 200
         self._base_front = front_distance if front_distance is not None else 500
         self._base_right = right_distance if right_distance is not None else 300
+        self._verbose = verbose
     
     def _initialize_hardware(self) -> None:
         """ハードウェアを初期化（モック：ログ出力のみ）"""
         if self._is_initialized:
             return
         
-        print("[MOCK] TOF sensors initialized (mock mode)")
-        print(f"[MOCK] XSHUT pins: {self.xshut_pins}")
-        print(f"[MOCK] I2C addresses: {[hex(addr) for addr in self.i2c_addresses]}")
+        if self._verbose:
+            print("[MOCK] TOF sensors initialized (mock mode)")
+            print(f"[MOCK] XSHUT pins: {self.xshut_pins}")
+            print(f"[MOCK] I2C addresses: {[hex(addr) for addr in self.i2c_addresses]}")
         self._is_initialized = True
     
     def _get_random_distance(self) -> int:
@@ -138,7 +142,7 @@ class MockTOFSensor:
         # ログ出力頻度を制限（一定時間ごとに出力）
         current_time = time.time()
         self._read_count += 1
-        if current_time - self._last_log_time >= self._log_interval_sec:
+        if self._verbose and current_time - self._last_log_time >= self._log_interval_sec:
             elapsed = current_time - self._start_time
             print(f"[MOCK] TOF readings (#{self._read_count}, t={elapsed:.1f}s): 前={front}mm, 左={left}mm, 右={right}mm")
             self._last_log_time = current_time
@@ -165,7 +169,7 @@ class MockTOFSensor:
         
         # ログ出力頻度を制限
         current_time = time.time()
-        if current_time - self._last_log_time >= self._log_interval_sec:
+        if self._verbose and current_time - self._last_log_time >= self._log_interval_sec:
             print(f"[MOCK] Front TOF: {distance}mm")
             self._last_log_time = current_time
         
@@ -180,7 +184,7 @@ class MockTOFSensor:
         
         # ログ出力頻度を制限
         current_time = time.time()
-        if current_time - self._last_log_time >= self._log_interval_sec:
+        if self._verbose and current_time - self._last_log_time >= self._log_interval_sec:
             print(f"[MOCK] Left TOF: {distance}mm")
             self._last_log_time = current_time
         
@@ -195,7 +199,7 @@ class MockTOFSensor:
         
         # ログ出力頻度を制限
         current_time = time.time()
-        if current_time - self._last_log_time >= self._log_interval_sec:
+        if self._verbose and current_time - self._last_log_time >= self._log_interval_sec:
             print(f"[MOCK] Right TOF: {distance}mm")
             self._last_log_time = current_time
         

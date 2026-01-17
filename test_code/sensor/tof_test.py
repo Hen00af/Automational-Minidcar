@@ -1,6 +1,6 @@
 import time
-import board
-import busio
+# ハードウェアモジュールの自動インポート（Raspberry Pi環境では実機、それ以外ではモック）
+from hardware_import import board, busio
 import adafruit_vl53l0x
 
 i2c = busio.I2C(board.SCL, board.SDA)

@@ -19,11 +19,12 @@ def main():
         front_distance=500,
         right_distance=300,
         use_random=False,
-        use_dynamic=True  # 時間経過で値が変化する動的モックを有効化
+        use_dynamic=True,  # 時間経過で値が変化する動的モックを有効化
+        verbose=False  # 詳細ログを無効化（orchestratorのテーブルログのみ表示）
     )
     perception = WallPositionPerception(target_distance_mm=200.0)
     decision = WallFollowDecision(base_speed=0.5)  # kpはデフォルト値0.03を使用（純粋なP制御）
-    actuation = MockActuation()
+    actuation = MockActuation(verbose=False)  # 詳細ログを無効化（orchestratorのテーブルログのみ表示）
     
     # キャリブレーションを設定（const.pyの値を使用）
     calib = ActuationCalibration(

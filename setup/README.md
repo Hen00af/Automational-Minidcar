@@ -69,7 +69,7 @@ setup/
 
 - **メモリ**: 最低4GB、推奨8GB以上
 - **ディスク容量**: 最低5GBの空き容量
-- **OS**: Windows 10/11、macOS 10.15以降、Linux（Ubuntu 20.04以降推奨）
+- **OS**: Windows 10/11、macOS 10.15以降、Linux（Ubuntu 20.04以降、Debian 13 (trixie)以降推奨）
 
 ## セットアップ手順
 
@@ -93,6 +93,8 @@ sudo systemctl enable docker
 # ユーザーをdockerグループに追加（再ログインが必要）
 sudo usermod -aG docker $USER
 ```
+
+**注意**: Debian 13 (trixie) を使用している場合、`docker-compose-plugin`が利用できない場合は、`docker-compose`を個別にインストールするか、`docker compose`（プラグイン版）を使用してください。
 
 ### 2. プロジェクトの準備
 
@@ -224,6 +226,11 @@ ls -la  # プロジェクトファイルが表示されるはず
 
 - **opencv-python** (4.8.1.78): カメラモジュールV2の画像解析用
 - **numpy** (1.24.3): 数値計算ライブラリ（OpenCVの依存関係）
+
+#### I2C/PWM制御
+
+- **adafruit-blinka**: CircuitPython互換ライブラリ（`busio`, `board` モジュールを含む）
+- **adafruit-circuitpython-pca9685**: PCA9685 PWMドライバー用ライブラリ
 
 #### その他
 
@@ -376,14 +383,31 @@ ERROR: failed to solve: ...
 **エラー:**
 ```
 RuntimeError: This module can only be run on a Raspberry Pi!
+AttributeError: ...
 ```
 
 **説明:**
-これは正常な動作です。Windows/MacではGPIOアクセスはできませんが、コードのロジック開発には問題ありません。
+`adafruit-blinka` などのライブラリは実機のRaspberry Pi環境でのみ動作します。Docker環境（Windows/Mac）ではハードウェア検出に失敗します。
 
-**対処:**
-- エラーを無視して開発を続行
-- 実機環境（Raspberry Pi）で最終テストを実行
+**解決方法:**
+`kudou_test/` ディレクトリ内のスクリプトは、自動的にモック実装を使用するように修正されています。スクリプトの先頭で `hardware_import` を使用することで、Docker環境でも動作します：
+
+```python
+# ハードウェアモジュールの自動インポート（Raspberry Pi環境では実機、それ以外ではモック）
+from hardware_import import board, busio
+from adafruit_pca9685 import PCA9685
+```
+
+モック実装は以下のファイルで提供されています：
+- `board_mock.py`: `board` モジュールのモック
+- `busio_mock.py`: `busio` モジュールのモック
+- `digitalio_mock.py`: `digitalio` モジュールのモック
+- `pca9685_mock.py`: `adafruit_pca9685` のモック
+
+**注意:**
+- モック実装では実際のハードウェア制御は行われませんが、コードのロジック開発やテストには使用できます
+- 実機環境（Raspberry Pi）では自動的に実機モジュールが使用されます
+- 環境変数 `USE_MOCK_HARDWARE=1` を設定すると、強制的にモックを使用できます
 
 ### ボリュームマウントが機能しない
 

@@ -8,6 +8,10 @@ pigpio==1.78  # より高精度なPWM制御用（周期17ms/60Hzのパルス生�
 opencv-python==4.8.1.78
 numpy==1.24.3
 
+# I2C/PWM制御用（PCA9685ドライバー用）
+adafruit-blinka  # busio, board モジュールを含む
+adafruit-circuitpython-pca9685  # PCA9685 PWMドライバー用
+
 # その他便利なライブラリ
 pyserial==3.5
 
