@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import sys
 import os
+import time
 from typing import Optional
 
 # ハードウェアモジュールの自動インポート
@@ -106,6 +107,10 @@ class PWMActuation:
         if self._calib:
             set_us(self._esc_channel, self._calib.throttle_stop_us)
             set_us(self._servo_channel, self._calib.steer_center_us)
+            
+            # ESCニュートラル設定後の待機（drive_test.pyと同様の処理）
+            print("ESC: Neutral (停止)")
+            time.sleep(2)
     
     def _steer_to_us(self, steer: float) -> int:
         """
