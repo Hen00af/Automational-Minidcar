@@ -25,12 +25,12 @@ def _is_raspberry_pi() -> bool:
 _is_non_raspberry = not _is_raspberry_pi()
 
 if _is_non_raspberry:
-    # 非Raspberry Pi環境ではtest_codeからハードウェアモジュールをインポート
+    # 非Raspberry Pi環境ではkudou_testからハードウェアモジュールをインポート
     try:
-        # test_codeディレクトリをパスに追加
-        test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'test_code')
-        if test_code_path not in sys.path:
-            sys.path.insert(0, test_code_path)
+        # kudou_testディレクトリをパスに追加
+        kudou_test_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'kudou_test')
+        if kudou_test_path not in sys.path:
+            sys.path.insert(0, kudou_test_path)
         
         from hardware_import import board, busio
         from adafruit_pca9685 import PCA9685
@@ -82,12 +82,8 @@ class PWMActuation:
         
         try:
             i2c = busio.I2C(board.SCL, board.SDA)
-            # drive_test.pyに合わせて、addressを指定（デフォルトは0x40）
-            if self.i2c_address != 0x40:
-                self._pca = PCA9685(i2c, address=self.i2c_address)
-            else:
-                self._pca = PCA9685(i2c)
-            self._pca.frequency = PCA9685_FREQUENCY  # ESC/サーボは50Hz
+            self._pca = PCA9685(i2c, address=self.i2c_address)
+            self._pca.frequency = PCA9685_FREQUENCY
             
             self._esc_channel = self._pca.channels[CH_ESC]
             self._servo_channel = self._pca.channels[CH_SERVO]
