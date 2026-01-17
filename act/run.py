@@ -8,8 +8,6 @@ from act.perception import WallPositionPerception
 from act.decision import WallFollowDecision
 from act.actuation import PWMActuation
 from act.domain.actuation import ActuationCalibration
-import time
-from act.config import timing
 
 
 def main():
@@ -30,10 +28,6 @@ def main():
         throttle_max_us=1600   # 最大（throttle=+1.0）
     )
     actuation.configure(calib)
-    
-    # ESC初期化の完了を待つ（念のため）
-    print(f"[REAL MODE] Waiting {timing.esc_init.NEUTRAL_WAIT}s for ESC initialization...")
-    time.sleep(timing.esc_init.NEUTRAL_WAIT)
     
     # オーケストレーターを作成
     orchestrator = Orchestrator(sensor, perception, decision, actuation)
