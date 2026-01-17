@@ -30,12 +30,12 @@ def _is_raspberry_pi() -> bool:
 _is_non_raspberry = not _is_raspberry_pi()
 
 if _is_non_raspberry:
-    # 非Raspberry Pi環境ではkudou_testからハードウェアモジュールをインポート
+    # 非Raspberry Pi環境ではtest_codeからハードウェアモジュールをインポート
     try:
-        # kudou_testディレクトリをパスに追加
-        kudou_test_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'kudou_test')
-        if kudou_test_path not in sys.path:
-            sys.path.insert(0, kudou_test_path)
+        # test_codeディレクトリをパスに追加
+        test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'test_code')
+        if test_code_path not in sys.path:
+            sys.path.insert(0, test_code_path)
         
         from hardware_import import board, busio, digitalio
         try:
