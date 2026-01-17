@@ -172,33 +172,15 @@ class PWMActuation:
         Returns:
             テレメトリ情報
         """
-        # キャリブレーションが設定されていない場合は、デフォルト値（オートキャリブレーション対応）を使用
         if not self._calib:
-            self._calib = ActuationCalibration(
-                steer_center_us=hardware.servo.US_CENTER,
-                steer_left_us=hardware.servo.US_LEFT,
-                steer_right_us=hardware.servo.US_RIGHT,
-                throttle_stop_us=hardware.esc.US_NEUTRAL,
-                throttle_max_us=hardware.esc.US_FORWARD_SLOW
+            return Telemetry(
+                frame_id=command.frame_id,
+                t_capture_sec=command.t_capture_sec,
+                status=ActuationStatus.CALIBRATION_ERROR,
+                message="Calibration not configured"
             )
-            # ハードウェアを初期化
-            if not self._is_initialized:
-                try:
-                    self._initialize_hardware()
-                except Exception as e:
-                    return Telemetry(
-                        frame_id=command.frame_id,
-                        t_capture_sec=command.t_capture_sec,
-                        status=ActuationStatus.DRIVER_ERROR,
-                        message=f"Hardware initialization failed: {e}"
-                    )
-            # 初期状態でニュートラル位置に設定
-            set_us(self._esc_channel, self._calib.throttle_stop_us)
-            set_us(self._servo_channel, self._calib.steer_center_us)
-            print("ESC: Neutral (停止) - Auto calibration")
-            time.sleep(2)
-        elif not self._is_initialized:
-            # キャリブレーションは設定済みだが、ハードウェアが未初期化の場合
+        
+        if not self._is_initialized:
             try:
                 self._initialize_hardware()
             except Exception as e:
