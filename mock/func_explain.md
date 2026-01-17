@@ -16,7 +16,8 @@ Raspberry Pi環境かどうかを判定する関数。
 
 **判定方法:**
 1. `/proc/cpuinfo` を読み込み、'Raspberry Pi' または 'BCM' が含まれているか確認
-2. デフォルトでは `False` を返す（Docker環境を想定）
+2. 環境変数 `USE_MOCK_HARDWARE` が設定されている場合は、その値に従う
+3. デフォルトでは `False` を返す（Docker環境を想定）
 
 **使用例:**
 ```python
@@ -24,7 +25,7 @@ from hardware_import import is_raspberry_pi
 if is_raspberry_pi():
     print("Raspberry Pi環境です")
 else:
-    print("非Raspberry Pi環境です")
+    print("モック環境です")
 ```
 
 ---

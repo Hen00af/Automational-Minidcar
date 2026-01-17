@@ -8,9 +8,6 @@ from typing import Optional
 
 from ..interfaces.protocols import DistanceSensorModule, Perception, Decision, Actuation
 from ..domain.actuation import Telemetry
-from ..domain.distance import DistanceData
-from ..domain.features import WallFeatures
-from ..domain.command import Command
 
 
 class Orchestrator:
@@ -107,10 +104,10 @@ class Orchestrator:
     def _log_cycle(
         self,
         elapsed_time: float,
-        distance_data: DistanceData,
-        features: WallFeatures,
-        command: Command,
-        telemetry: Telemetry
+        distance_data,
+        features,
+        command,
+        telemetry
     ) -> None:
         """
         1サイクルの詳細情報をログ出力（パイプ区切りのテーブル形式）

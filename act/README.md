@@ -24,7 +24,6 @@ act/
 │   └── README.md        # configパッケージの詳細説明
 ├── sensors/             # 物理センサー実装
 │   ├── __init__.py
-│   ├── mock.py          # 開発用モック（MockTOFSensor）
 │   └── tof.py           # 実機用（TOFSensor - VL53L0X）
 ├── perception/          # 知覚モジュール実装
 │   ├── __init__.py
@@ -34,13 +33,11 @@ act/
 │   └── wall_follow.py   # 左壁沿いP制御
 ├── actuation/           # 駆動モジュール実装
 │   ├── __init__.py
-│   ├── pwm.py           # pigpioを使用したPWM制御実装
-│   └── mock.py          # 開発・テスト用のモック実装
+│   └── pwm.py           # pigpioを使用したPWM制御実装
 ├── orchestrator/        # オーケストレーター
 │   ├── __init__.py
 │   └── orchestrator.py  # センサー→知覚→判断→駆動のループ
 ├── run.py               # 実機実行スクリプト
-├── run_mock.py          # モック実行スクリプト
 ├── Makefile             # ビルド・実行用Makefile
 └── README.md            # このファイル
 ```
@@ -86,8 +83,6 @@ TOFセンサー（距離センサー）の実装モジュール。
 - **`tof.py`**: 実機用のVL53L0X実装（`TOFSensor`クラス）
   - 3つのVL53L0Xセンサー（前・左・右）をI2Cで制御
   - XSHUTピンを使用してI2Cアドレスを設定
-- **`mock.py`**: 開発・テスト用のモック実装（`MockTOFSensor`クラス）
-  - 固定値、ランダム値、動的変化（時間経過で値が変化）に対応
 
 ### `perception/`
 距離データから特徴量を抽出する知覚モジュールの実装。
@@ -112,8 +107,6 @@ TOFセンサー（距離センサー）の実装モジュール。
 - **`pwm.py`**: `PWMActuation`クラス
   - pigpioを使用したPWM制御実装
   - PCA9685を使用してESCとサーボを制御
-- **`mock.py`**: `MockActuation`クラス
-  - 開発・テスト用のモック実装（実際のハードウェアは使用しない）
 
 ### `orchestrator/`
 全モジュールを統合して実行するオーケストレーター。
@@ -124,20 +117,6 @@ TOFセンサー（距離センサー）の実装モジュール。
   - `emergency_stop()`: 緊急停止
 
 ## 実行方法
-
-### モックモード（開発・テスト用）
-
-ハードウェアなしで動作を確認できます。
-
-```bash
-# Makefileを使用
-make mock_run
-# または
-make run_mock
-
-# 直接実行
-python3 run_mock.py
-```
 
 ### 実機モード（Raspberry Pi）
 
@@ -155,7 +134,6 @@ python3 run.py
 
 ```bash
 make help      # 利用可能なコマンドを表示
-make mock_run  # モックモードで実行
 make run       # 実機モードで実行
 make clean     # Pythonキャッシュファイルを削除
 ```
@@ -163,42 +141,6 @@ make clean     # Pythonキャッシュファイルを削除
 ## 使用例
 
 ### 基本的な使用例
-
-```python
-from act.orchestrator import Orchestrator
-from act.sensors import TOFSensor, MockTOFSensor
-from act.perception import WallPositionPerception
-from act.decision import WallFollowDecision
-from act.actuation import PWMActuation, MockActuation
-from act.domain.actuation import ActuationCalibration
-
-# モックモードの場合
-sensor = MockTOFSensor(
-    left_distance=200,  # 目標距離に設定
-    front_distance=500,
-    right_distance=300,
-    use_dynamic=True  # 時間経過で値が変化
-)
-perception = WallPositionPerception(target_distance_mm=200.0)
-decision = WallFollowDecision(kp=0.03, base_speed=0.5)
-actuation = MockActuation()
-
-# キャリブレーションを設定
-calib = ActuationCalibration(
-    steer_center_us=1500,  # 中央
-    steer_left_us=1300,    # 左（steer=+1.0）
-    steer_right_us=1700,   # 右（steer=-1.0）
-    throttle_stop_us=1500, # 停止
-    throttle_max_us=1600   # 最大（throttle=+1.0）
-)
-actuation.configure(calib)
-
-# Orchestratorで統合実行
-orchestrator = Orchestrator(sensor, perception, decision, actuation)
-orchestrator.run_loop(loop_interval_sec=0.1, log_interval_sec=1.0)
-```
-
-### 実機モードの場合
 
 ```python
 from act.orchestrator import Orchestrator
@@ -257,9 +199,6 @@ finally:
 ### モジュール間の結合
 各モジュールは `domain/` の型定義と `interfaces/` のプロトコルにのみ依存し、実装の詳細には依存しません。これにより、各モジュールを独立して開発・テストできます。
 
-### モック実装
-各モジュールにはモック実装が用意されており、ハードウェアなしで開発・テストが可能です。
-
 ## 開発・運用のポイント
 
 ### 型定義の変更
@@ -280,10 +219,6 @@ finally:
 - **駆動モジュール**: `ActuationCalibration` のPWM値設定
 
 ## トラブルシューティング
-
-### モックモードで実行できない
-- Pythonのパスが正しく設定されているか確認してください
-- `PYTHONPATH` 環境変数を設定するか、`Makefile` を使用してください
 
 ### 実機モードでセンサーが動作しない
 - Raspberry Pi環境であることを確認してください

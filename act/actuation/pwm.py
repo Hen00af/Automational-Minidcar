@@ -19,19 +19,13 @@ def _is_raspberry_pi() -> bool:
     except (FileNotFoundError, PermissionError):
         pass
     
-    # 環境変数で強制的にモックを使用する場合
-    if os.environ.get('USE_MOCK_HARDWARE', '').lower() in ('1', 'true', 'yes'):
-        return False
-    
     return False  # Docker環境では常にFalse
 
 # ハードウェアモジュールのインポート
-_use_mock = not _is_raspberry_pi()
+_is_non_raspberry = not _is_raspberry_pi()
 
-if _use_mock:
-    # モックモジュールを使用（実際にはmock.pyを使うべきだが、ここでは警告のみ）
-    print("[WARNING] PWM actuation: Not on Raspberry Pi, but using pwm.py. Consider using mock.py", file=sys.stderr)
-    # モックモジュールをインポート（kudou_testから）
+if _is_non_raspberry:
+    # 非Raspberry Pi環境ではkudou_testからハードウェアモジュールをインポート
     try:
         # kudou_testディレクトリをパスに追加
         kudou_test_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'kudou_test')
@@ -41,9 +35,9 @@ if _use_mock:
         from hardware_import import board, busio
         from adafruit_pca9685 import PCA9685
     except ImportError:
-        raise ImportError("Cannot import hardware modules. Use mock.py for non-Raspberry Pi environments.")
+        raise ImportError("Cannot import hardware modules.")
 else:
-    # 実機モジュールをインポート
+    # Raspberry Pi環境では標準モジュールをインポート
     import board
     import busio
     from adafruit_pca9685 import PCA9685
