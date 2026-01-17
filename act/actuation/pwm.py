@@ -102,14 +102,32 @@ class PWMActuation:
         self._calib = calib
         self._initialize_hardware()
         
-        # 初期状態でニュートラル位置に設定
+        # ESC初期化手順（最大値→最小値→ニュートラル）
         if self._calib:
+            import time
+            from ..config import timing, hardware
+            
+            print("[ESC Init] Step 1: Setting maximum value...")
+            # 最大値（duty_cycle = 0x2000）を設定
+            self._esc_channel.duty_cycle = hardware.pca9685.DUTY_CYCLE_MAX
+            time.sleep(timing.esc_init.MAX_WAIT)
+            
+            print("[ESC Init] Step 2: Please turn on ESC switch, then waiting...")
+            # ESCスイッチON後5秒待機
+            time.sleep(timing.esc_init.SWITCH_WAIT)
+            
+            print("[ESC Init] Step 3: Setting minimum value...")
+            # 最小値（duty_cycle = 0x1000）を設定
+            self._esc_channel.duty_cycle = hardware.pca9685.DUTY_CYCLE_MIN
+            time.sleep(timing.esc_init.MIN_WAIT)
+            
+            print("[ESC Init] Step 4: Setting neutral position...")
+            # ニュートラル位置を設定
             set_us(self._esc_channel, self._calib.throttle_stop_us)
             set_us(self._servo_channel, self._calib.steer_center_us)
-            # ESC初期化待機時間を追加
-            import time
-            from ..config import timing
             time.sleep(timing.esc_init.NEUTRAL_WAIT)
+            
+            print("[ESC Init] Complete!")
     
     def _steer_to_us(self, steer: float) -> int:
         """
