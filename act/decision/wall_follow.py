@@ -21,7 +21,7 @@ class WallFollowDecision:
     def __init__(
         self,
         kp: float = 0.03,
-        base_speed: float = 0.5,
+        base_speed: float = 1.0,
         max_steering: float = 1.0,
         front_blocked_speed: float = 0.0,
         front_blocked_steering: float = -0.5,  # 右に曲がる（負の値）
