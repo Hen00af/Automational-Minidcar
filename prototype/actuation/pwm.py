@@ -16,8 +16,8 @@ try:
     from adafruit_pca9685 import PCA9685
 except (ImportError, RuntimeError):
     # Docker環境などで実機モジュールが使用できない場合はモックを使用
-    # test_codeディレクトリをパスに追加
-    test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'test_code')
+    # sampleディレクトリをパスに追加
+    test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sample')
     if test_code_path not in sys.path:
         sys.path.insert(0, test_code_path)
     
