@@ -5,7 +5,6 @@
 # --------------------------------
 from __future__ import annotations
 
-import os
 import sys
 import time
 from typing import Optional, Tuple
@@ -13,48 +12,11 @@ from dataclasses import dataclass
 
 from ..domain.distance import DistanceData
 
-# ハードウェアモジュールのインポート（実機環境を優先、失敗時はモックを使用）
-try:
-    import board
-    import busio
-    import digitalio
-    import adafruit_vl53l0x
-except (ImportError, RuntimeError):
-    # Docker環境などで実機モジュールが使用できない場合はモックを使用
-    # sampleディレクトリをパスに追加
-    test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sample')
-    if test_code_path not in sys.path:
-        sys.path.insert(0, test_code_path)
-    
-    import board_mock as board
-    import busio_mock as busio
-    import digitalio_mock as digitalio
-    
-    # adafruit_vl53l0x のモッククラス
-    class VL53L0X:
-        """VL53L0X TOFセンサーのモック実装"""
-        def __init__(self, i2c, address=0x29):
-            self.i2c = i2c
-            self.address = address
-            self._range = 1000  # デフォルト距離（mm）
-            print(f"[MOCK] VL53L0X initialized: address=0x{address:02X}")
-        
-        def set_address(self, new_address):
-            """I2Cアドレスを変更（モック）"""
-            self.address = new_address
-            print(f"[MOCK] VL53L0X address changed to 0x{new_address:02X}")
-        
-        @property
-        def range(self):
-            """距離を取得（モック）"""
-            return self._range
-    
-    # モックモジュールとして登録
-    class VL53L0XModule:
-        VL53L0X = VL53L0X
-    
-    adafruit_vl53l0x = VL53L0XModule()
-    print("[INFO] Using mock hardware modules for TOF sensor", file=sys.stderr)
+# ハードウェアモジュールのインポート（ラズベリーパイ環境専用）
+import board
+import busio
+import digitalio
+import adafruit_vl53l0x
 
 
 @dataclass

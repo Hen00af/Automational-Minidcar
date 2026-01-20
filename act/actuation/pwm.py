@@ -5,13 +5,42 @@
 from __future__ import annotations
 
 import sys
-import time
+import os
 from typing import Optional
 
-# ハードウェアモジュールのインポート（ラズベリーパイ環境専用）
-import board
-import busio
-from adafruit_pca9685 import PCA9685
+# ハードウェアモジュールの自動インポート
+# sample/hardware_import.py のロジックを参考
+def _is_raspberry_pi() -> bool:
+    """Raspberry Pi環境かどうかを判定"""
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            cpuinfo = f.read()
+            return 'Raspberry Pi' in cpuinfo or 'BCM' in cpuinfo
+    except (FileNotFoundError, PermissionError):
+        pass
+    
+    return False  # Docker環境では常にFalse
+
+# ハードウェアモジュールのインポート
+_is_non_raspberry = not _is_raspberry_pi()
+
+if _is_non_raspberry:
+    # 非Raspberry Pi環境ではsampleからハードウェアモジュールをインポート
+    try:
+        # sampleディレクトリをパスに追加
+        sample_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sample')
+        if sample_path not in sys.path:
+            sys.path.insert(0, sample_path)
+        
+        from hardware_import import board, busio
+        from adafruit_pca9685 import PCA9685
+    except ImportError:
+        raise ImportError("Cannot import hardware modules.")
+else:
+    # Raspberry Pi環境では標準モジュールをインポート
+    import board
+    import busio
+    from adafruit_pca9685 import PCA9685
 
 from ..domain.command import Command, DriveMode
 from ..domain.actuation import ActuationCalibration, Telemetry, ActuationStatus
@@ -77,10 +106,6 @@ class PWMActuation:
         if self._calib:
             set_us(self._esc_channel, self._calib.throttle_stop_us)
             set_us(self._servo_channel, self._calib.steer_center_us)
-            
-            # ESCニュートラル設定後の待機（drive_test.pyと同様の処理）
-            print("ESC: Neutral (停止)")
-            time.sleep(2)
     
     def _steer_to_us(self, steer: float) -> int:
         """

@@ -4,30 +4,16 @@
 # --------------------------------
 from __future__ import annotations
 
-import os
 import sys
 import time
 from typing import Optional
 
 from .hardware import hardware
 
-# ハードウェアモジュールのインポート（実機環境を優先、失敗時はモックを使用）
-try:
-    import board
-    import busio
-    from adafruit_pca9685 import PCA9685
-except (ImportError, RuntimeError):
-    # Docker環境などで実機モジュールが使用できない場合はモックを使用
-    # sampleディレクトリをパスに追加
-    test_code_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sample')
-    if test_code_path not in sys.path:
-        sys.path.insert(0, test_code_path)
-    
-    import board_mock as board
-    import busio_mock as busio
-    import pca9685_mock
-    PCA9685 = pca9685_mock.PCA9685
-    print("[INFO] Using mock hardware modules for config utils", file=sys.stderr)
+# ハードウェアモジュールのインポート（ラズベリーパイ環境専用）
+import board
+import busio
+from adafruit_pca9685 import PCA9685
 
 
 def set_us(ch, us: int) -> None:
