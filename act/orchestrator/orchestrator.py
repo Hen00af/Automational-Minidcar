@@ -46,6 +46,9 @@ class Orchestrator:
         self._loop_index = 0
         self._timing_logger = self._setup_timing_logger(timing_log_path)
         self._timing_start_time = time.time()
+        self._last_sensor_time: Optional[float] = None
+        self._last_actuation_time: Optional[float] = None
+        self._last_loop_time: Optional[float] = None
         if self._timing_logger:
             self._timing_logger.info("event=run_start t=%.3fs", 0.0)
 
@@ -88,6 +91,43 @@ class Orchestrator:
 
         elapsed_sec = time.time() - self._timing_start_time
         self._timing_logger.info("event=%s t=%.3fs", event, elapsed_sec)
+
+    def _log_frequency(self, loop_idx: int, sensor_time: float, actuation_time: float, loop_time: float) -> None:
+        if not self._timing_logger:
+            return
+
+        sensor_hz = self._calculate_hz(sensor_time, self._last_sensor_time)
+        actuation_hz = self._calculate_hz(actuation_time, self._last_actuation_time)
+        loop_hz = self._calculate_hz(loop_time, self._last_loop_time)
+
+        elapsed_sec = time.time() - self._timing_start_time
+        self._timing_logger.info(
+            "t=%.3fs loop=%d metric=frequency sensor_hz=%s actuation_hz=%s loop_hz=%s",
+            elapsed_sec,
+            loop_idx,
+            self._format_hz(sensor_hz),
+            self._format_hz(actuation_hz),
+            self._format_hz(loop_hz),
+        )
+
+        self._last_sensor_time = sensor_time
+        self._last_actuation_time = actuation_time
+        self._last_loop_time = loop_time
+
+    @staticmethod
+    def _calculate_hz(current_time: float, last_time: Optional[float]) -> Optional[float]:
+        if last_time is None:
+            return None
+        dt = current_time - last_time
+        if dt <= 0:
+            return None
+        return 1.0 / dt
+
+    @staticmethod
+    def _format_hz(value: Optional[float]) -> str:
+        if value is None:
+            return "NA"
+        return f"{value:.2f}"
     
     def run_once(self) -> Telemetry:
         """
@@ -125,6 +165,7 @@ class Orchestrator:
         t7 = time.perf_counter()
         self._log_stage(loop_idx, "actuation", t6, t7)
         self._log_event("loop_end")
+        self._log_frequency(loop_idx, t1, t7, t0)
         return telemetry
     
     def run_loop(self, max_iterations: Optional[int] = None, loop_interval_sec: float = 0.1, log_interval_sec: float = 1.0) -> None:
@@ -169,6 +210,7 @@ class Orchestrator:
                 t7 = time.perf_counter()
                 self._log_stage(loop_idx, "actuation", t6, t7)
                 self._log_event("loop_end")
+                self._log_frequency(loop_idx, t1, t7, t0)
                 
                 # ヘッダーを一度だけ出力
                 if not header_printed:
