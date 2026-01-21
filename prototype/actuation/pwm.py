@@ -32,12 +32,12 @@ class PWMActuation:
     func_explain.md の set_us() 関数を利用。
     """
     
-    def __init__(self, i2c_address: int = 0x40):
+    def __init__(self, i2c_address: int = hardware.pca9685.I2C_ADDRESS):
         """
         初期化
         
         Args:
-            i2c_address: PCA9685のI2Cアドレス（デフォルト: 0x40）
+            i2c_address: PCA9685のI2Cアドレス。デフォルトは設定ファイルの値（0x40）
         """
         self.i2c_address = i2c_address
         self._calib: Optional[ActuationCalibration] = None

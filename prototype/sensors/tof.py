@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 from dataclasses import dataclass
 
 from ..domain.distance import DistanceData
-from ..config import timing
+from ..config import timing, sensors
 
 # ハードウェアモジュールのインポート（ラズベリーパイ環境専用）
 import board
@@ -36,15 +36,15 @@ class TOFSensor:
     
     def __init__(
         self,
-        xshut_pins: Tuple[int, int, int] = (17, 27, 22),
-        i2c_addresses: Tuple[int, int, int] = (0x30, 0x31, 0x32)
+        xshut_pins: Tuple[int, int, int] = sensors.vl53l0x.XSHUT_PINS,
+        i2c_addresses: Tuple[int, int, int] = sensors.vl53l0x.I2C_ADDRESSES
     ):
         """
         初期化
         
         Args:
-            xshut_pins: XSHUTピンのGPIO番号（前、左、右の順）
-            i2c_addresses: I2Cアドレス（前、左、右の順、デフォルト: 0x30, 0x31, 0x32）
+            xshut_pins: XSHUTピンのGPIO番号（前、左、右の順）。デフォルトは設定ファイルの値
+            i2c_addresses: I2Cアドレス（前、左、右の順）。デフォルトは設定ファイルの値
         """
         self.xshut_pins = xshut_pins
         self.i2c_addresses = i2c_addresses
@@ -76,8 +76,8 @@ class TOFSensor:
                 pin.value = True  # そのセンサーだけ電源をONにする
                 time.sleep(timing.sensor_init.WAKE_WAIT)
                 
-                # 起動直後は 0x29 にいるので、それを捕まえる
-                sensor = adafruit_vl53l0x.VL53L0X(self._i2c, address=0x29)
+                # 起動直後はデフォルトアドレスにいるので、それを捕まえる
+                sensor = adafruit_vl53l0x.VL53L0X(self._i2c, address=sensors.vl53l0x.DEFAULT_ADDRESS)
                 
                 # 重ならないようにアドレスを変えていく
                 new_address = self.i2c_addresses[i]

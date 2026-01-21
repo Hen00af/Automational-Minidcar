@@ -8,6 +8,7 @@ import time
 
 from ..domain.command import Command, DriveMode
 from ..domain.features import WallFeatures
+from ..config import decision
 
 
 class WallFollowDecision:
@@ -20,25 +21,25 @@ class WallFollowDecision:
     
     def __init__(
         self,
-        kp: float = 0.03,
-        base_speed: float = 0.5,
-        max_steering: float = 1.0,
-        front_blocked_speed: float = 0.0,
-        front_blocked_steering: float = -0.5,  # 右に曲がる（負の値）
-        corner_left_speed: float = 0.3,
-        corner_left_steering: float = 0.8,  # 左に曲がる（正の値）
+        kp: float = decision.wall_follow.KP,
+        base_speed: float = decision.wall_follow.BASE_SPEED,
+        max_steering: float = decision.wall_follow.MAX_STEERING,
+        front_blocked_speed: float = decision.wall_follow.FRONT_BLOCKED_SPEED,
+        front_blocked_steering: float = decision.wall_follow.FRONT_BLOCKED_STEERING,
+        corner_left_speed: float = decision.wall_follow.CORNER_LEFT_SPEED,
+        corner_left_steering: float = decision.wall_follow.CORNER_LEFT_STEERING,
     ):
         """
         初期化
         
         Args:
-            kp: P制御の比例ゲイン（デフォルト: 0.03）
-            base_speed: 通常走行時の基本速度 [0.0, 1.0]
-            max_steering: ステアリングの最大値（絶対値）
-            front_blocked_speed: 前方に壁がある場合の速度
-            front_blocked_steering: 前方に壁がある場合のステアリング（右折用、負の値）
-            corner_left_speed: 左コーナー時の速度
-            corner_left_steering: 左コーナー時のステアリング（左折用、正の値）
+            kp: P制御の比例ゲイン。デフォルトは設定ファイルの値
+            base_speed: 通常走行時の基本速度 [0.0, 1.0]。デフォルトは設定ファイルの値
+            max_steering: ステアリングの最大値（絶対値）。デフォルトは設定ファイルの値
+            front_blocked_speed: 前方に壁がある場合の速度。デフォルトは設定ファイルの値
+            front_blocked_steering: 前方に壁がある場合のステアリング（右折用、負の値）。デフォルトは設定ファイルの値
+            corner_left_speed: 左コーナー時の速度。デフォルトは設定ファイルの値
+            corner_left_steering: 左コーナー時のステアリング（左折用、正の値）。デフォルトは設定ファイルの値
         """
         self.kp = kp
         self.base_speed = base_speed

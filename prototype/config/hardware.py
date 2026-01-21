@@ -12,6 +12,7 @@ from typing import Final
 class PCA9685Config:
     """PCA9685設定"""
     FREQUENCY: Final[int] = 50  # PWM周波数（ESC/サーボは50Hz）
+    I2C_ADDRESS: Final[int] = 0x40  # I2Cアドレス（デフォルト）
     CH_ESC: Final[int] = 0      # ESC（モーター制御）チャンネル
     CH_SERVO: Final[int] = 1    # サーボ（ステアリング）チャンネル
     

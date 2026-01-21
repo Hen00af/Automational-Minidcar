@@ -11,6 +11,7 @@ from ..domain.actuation import Telemetry
 from ..domain.distance import DistanceData
 from ..domain.features import WallFeatures
 from ..domain.command import Command
+from ..config import orchestrator
 
 
 class Orchestrator:
@@ -59,15 +60,15 @@ class Orchestrator:
         telemetry = self.actuation.apply(command)
         return telemetry
     
-    def run_loop(self, max_iterations: Optional[int] = None, loop_interval_sec: float = 0.1, log_interval_sec: float = 1.0) -> None:
+    def run_loop(self, max_iterations: Optional[int] = None, loop_interval_sec: float = orchestrator.LOOP_INTERVAL_SEC, log_interval_sec: float = orchestrator.LOG_INTERVAL_SEC) -> None:
         """
         連続実行（第1イテレーションは単純に繰り返すだけ）。
         最新優先の高度化（古いフレーム破棄等）は次イテレーションで扱う。
         
         Args:
             max_iterations: 最大実行回数（Noneの場合は無限ループ）
-            loop_interval_sec: ループ間隔（秒）。デフォルトは0.1秒（10Hz）
-            log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは1.0秒
+            loop_interval_sec: ループ間隔（秒）。デフォルトは設定ファイルの値（0.1秒（10Hz））
+            log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは設定ファイルの値（1.0秒）
         """
         import time
         start_time = time.time()

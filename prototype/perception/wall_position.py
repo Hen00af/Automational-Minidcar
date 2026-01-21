@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from ..domain.distance import DistanceData
 from ..domain.features import WallFeatures
+from ..config import perception
 
 
 class WallPositionPerception:
@@ -20,17 +21,17 @@ class WallPositionPerception:
     
     def __init__(
         self,
-        target_distance_mm: float = 200.0,
-        front_blocked_threshold_mm: float = 150.0,
-        corner_left_threshold_mm: float = 1000.0
+        target_distance_mm: float = perception.wall_position.TARGET_DISTANCE_MM,
+        front_blocked_threshold_mm: float = perception.wall_position.FRONT_BLOCKED_THRESHOLD_MM,
+        corner_left_threshold_mm: float = perception.wall_position.CORNER_LEFT_THRESHOLD_MM
     ):
         """
         初期化
         
         Args:
-            target_distance_mm: 左壁との目標距離（mm）
-            front_blocked_threshold_mm: 前方が壁と判定する距離の閾値（mm）
-            corner_left_threshold_mm: 左側がコーナー（壁がない）と判定する距離の閾値（mm）
+            target_distance_mm: 左壁との目標距離（mm）。デフォルトは設定ファイルの値
+            front_blocked_threshold_mm: 前方が壁と判定する距離の閾値（mm）。デフォルトは設定ファイルの値
+            corner_left_threshold_mm: 左側がコーナー（壁がない）と判定する距離の閾値（mm）。デフォルトは設定ファイルの値
         """
         self.target_distance_mm = target_distance_mm
         self.front_blocked_threshold_mm = front_blocked_threshold_mm

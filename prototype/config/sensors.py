@@ -17,6 +17,7 @@ class VL53L0XConfig:
     # I2Cアドレス
     DEFAULT_ADDRESS: Final[int] = 0x29      # デフォルトアドレス
     BASE_ADDRESS: Final[int] = 0x30       # マルチセンサー時のベースアドレス
+    I2C_ADDRESSES: Final[Tuple[int, int, int]] = (0x30, 0x31, 0x32)  # 前、左、右の順
 
 
 @dataclass(frozen=True)
