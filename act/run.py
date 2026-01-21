@@ -34,7 +34,7 @@ def main():
     
     print("[REAL MODE] Starting loop (Ctrl+C to stop)...")
     try:
-        orchestrator.run_loop()
+        orchestrator.run_loop(loop_interval_sec=0.02)
     except KeyboardInterrupt:
         print("\n[REAL MODE] Stopped by user")
     finally:
