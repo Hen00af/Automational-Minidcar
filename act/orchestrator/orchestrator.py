@@ -4,6 +4,9 @@
 # --------------------------------
 from __future__ import annotations
 
+import logging
+import os
+import time
 from typing import Optional
 
 from ..interfaces.protocols import DistanceSensorModule, Perception, Decision, Actuation
@@ -23,7 +26,8 @@ class Orchestrator:
         sensor: DistanceSensorModule,
         perception: Perception,
         decision: Decision,
-        actuation: Actuation
+        actuation: Actuation,
+        timing_log_path: Optional[str] = "logs/orchestrator_timing.log"
     ):
         """
         初期化
@@ -33,11 +37,57 @@ class Orchestrator:
             perception: 知覚モジュール
             decision: 判断モジュール
             actuation: 駆動モジュール
+            timing_log_path: 計測ログの出力先（Noneで無効）
         """
         self.sensor = sensor
         self.perception = perception
         self.decision = decision
         self.actuation = actuation
+        self._loop_index = 0
+        self._timing_logger = self._setup_timing_logger(timing_log_path)
+        self._timing_start_time = time.time()
+        if self._timing_logger:
+            self._timing_logger.info("event=run_start t=%.3fs", 0.0)
+
+    def _setup_timing_logger(self, log_path: Optional[str]) -> Optional[logging.Logger]:
+        if not log_path:
+            return None
+
+        log_dir = os.path.dirname(log_path)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+
+        logger = logging.getLogger(f"orchestrator.timing.{id(self)}")
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+        logger.handlers.clear()
+
+        handler = logging.FileHandler(log_path)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        logger.addHandler(handler)
+        return logger
+
+    def _log_stage(self, loop_idx: int, stage: str, start_time: float, end_time: float) -> None:
+        if not self._timing_logger:
+            return
+
+        elapsed_sec = time.time() - self._timing_start_time
+        self._timing_logger.info(
+            "t=%.3fs loop=%d stage=%s start=%.6f end=%.6f dt_ms=%.3f",
+            elapsed_sec,
+            loop_idx,
+            stage,
+            start_time,
+            end_time,
+            (end_time - start_time) * 1000.0,
+        )
+
+    def _log_event(self, event: str) -> None:
+        if not self._timing_logger:
+            return
+
+        elapsed_sec = time.time() - self._timing_start_time
+        self._timing_logger.info("event=%s t=%.3fs", event, elapsed_sec)
     
     def run_once(self) -> Telemetry:
         """
@@ -46,17 +96,35 @@ class Orchestrator:
         Returns:
             Telemetry: 駆動モジュールの適用結果
         """
+        self._loop_index += 1
+        loop_idx = self._loop_index
+
+        self._log_event("loop_start")
+
         # 1. 計測 (Measure)
+        t0 = time.perf_counter()
         distance_data = self.sensor.read()
+        t1 = time.perf_counter()
+        self._log_stage(loop_idx, "sensor_read", t0, t1)
         
         # 2. 知覚 (Perceive)
+        t2 = time.perf_counter()
         features = self.perception.analyze(distance_data)
+        t3 = time.perf_counter()
+        self._log_stage(loop_idx, "perception", t2, t3)
         
         # 3. 判断 (Decide)
+        t4 = time.perf_counter()
         command = self.decision.decide(features)
+        t5 = time.perf_counter()
+        self._log_stage(loop_idx, "decision", t4, t5)
         
         # 4. 実行 (Act)
+        t6 = time.perf_counter()
         telemetry = self.actuation.apply(command)
+        t7 = time.perf_counter()
+        self._log_stage(loop_idx, "actuation", t6, t7)
+        self._log_event("loop_end")
         return telemetry
     
     def run_loop(self, max_iterations: Optional[int] = None, loop_interval_sec: float = 0.1, log_interval_sec: float = 1.0) -> None:
@@ -69,7 +137,6 @@ class Orchestrator:
             loop_interval_sec: ループ間隔（秒）。デフォルトは0.1秒（10Hz）
             log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは1.0秒
         """
-        import time
         start_time = time.time()
         iteration = 0
         last_log_time = 0.0
@@ -77,10 +144,31 @@ class Orchestrator:
         
         try:
             while max_iterations is None or iteration < max_iterations:
+                self._loop_index += 1
+                loop_idx = self._loop_index
+
+                self._log_event("loop_start")
+
+                t0 = time.perf_counter()
                 distance_data = self.sensor.read()
+                t1 = time.perf_counter()
+                self._log_stage(loop_idx, "sensor_read", t0, t1)
+
+                t2 = time.perf_counter()
                 features = self.perception.analyze(distance_data)
+                t3 = time.perf_counter()
+                self._log_stage(loop_idx, "perception", t2, t3)
+
+                t4 = time.perf_counter()
                 command = self.decision.decide(features)
+                t5 = time.perf_counter()
+                self._log_stage(loop_idx, "decision", t4, t5)
+
+                t6 = time.perf_counter()
                 telemetry = self.actuation.apply(command)
+                t7 = time.perf_counter()
+                self._log_stage(loop_idx, "actuation", t6, t7)
+                self._log_event("loop_end")
                 
                 # ヘッダーを一度だけ出力
                 if not header_printed:
@@ -103,6 +191,8 @@ class Orchestrator:
         except Exception as e:
             print(f"\n[Orchestrator] Error occurred: {e}")
             self.emergency_stop(f"error: {str(e)}")
+        finally:
+            self._log_event("run_stop")
     
     def _log_cycle(
         self,
