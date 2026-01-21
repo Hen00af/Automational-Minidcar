@@ -18,7 +18,7 @@ from ..domain.actuation import ActuationCalibration, Telemetry, ActuationStatus
 from ..interfaces.protocols import Actuation
 
 # config から定数と関数をインポート
-from ..config import hardware, set_us
+from ..config import hardware, set_us, timing
 
 # 定数をローカル変数として定義（後方互換性のため）
 PCA9685_FREQUENCY = hardware.pca9685.FREQUENCY
@@ -80,7 +80,7 @@ class PWMActuation:
             
             # ESCニュートラル設定後の待機（drive_test.pyと同様の処理）
             print("ESC: Neutral (停止)")
-            time.sleep(2)
+            time.sleep(timing.test.MOVE_WAIT)
     
     def _steer_to_us(self, steer: float) -> int:
         """

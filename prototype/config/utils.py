@@ -9,6 +9,7 @@ import time
 from typing import Optional
 
 from .hardware import hardware
+from .timing import timing
 
 # ハードウェアモジュールのインポート（ラズベリーパイ環境専用）
 import board
@@ -60,9 +61,9 @@ def test_drive_forward() -> None:
     # ① 停止（ニュートラル）
     print("ESC: Neutral (停止)")
     set_us(esc, hardware.esc.US_NEUTRAL)  # 1500μs
-    time.sleep(2)
+    time.sleep(timing.test.MOVE_WAIT)
     
     # ② ゆっくり前進
     print("ESC: Forward slow (1600)")
     set_us(esc, hardware.esc.US_FORWARD_SLOW)
-    time.sleep(2)
+    time.sleep(timing.test.MOVE_WAIT)

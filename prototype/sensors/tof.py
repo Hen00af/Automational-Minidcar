@@ -11,6 +11,7 @@ from typing import Optional, Tuple
 from dataclasses import dataclass
 
 from ..domain.distance import DistanceData
+from ..config import timing
 
 # ハードウェアモジュールのインポート（ラズベリーパイ環境専用）
 import board
@@ -68,12 +69,12 @@ class TOFSensor:
                 pin.value = False
                 self._xshut_controls.append(pin)
             
-            time.sleep(0.1)
+            time.sleep(timing.sensor_init.RESET_WAIT)
             
             # 2. 1つずつ順番に起動してアドレスを書き換える
             for i, pin in enumerate(self._xshut_controls):
                 pin.value = True  # そのセンサーだけ電源をONにする
-                time.sleep(0.01)
+                time.sleep(timing.sensor_init.WAKE_WAIT)
                 
                 # 起動直後は 0x29 にいるので、それを捕まえる
                 sensor = adafruit_vl53l0x.VL53L0X(self._i2c, address=0x29)

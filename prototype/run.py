@@ -15,7 +15,7 @@ def main():
     
     # 実機実装を使用
     sensor = TOFSensor()
-    perception = WallPositionPerception(target_distance_mm=200.0)
+    perception = WallPositionPerception()  # 設定ファイルからデフォルト値を読み込む
     decision = WallFollowDecision(kp=0.03, base_speed=0.5)  # 純粋なP制御（kdパラメータは削除）
     actuation = PWMActuation()
     
