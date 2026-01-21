@@ -30,7 +30,7 @@ class PCA9685Config:
 class ESCConfig:
     """ESC制御設定（マイクロ秒）"""
     US_NEUTRAL: Final[int] = 1500        # ニュートラル（停止）
-    US_FORWARD_SLOW: Final[int] = 1600   # 前進（低速）
+    US_FORWARD_SLOW: Final[int] = 1800   # 前進（低速）
     US_REVERSE: Final[int] = 1450        # 後退
 
 
