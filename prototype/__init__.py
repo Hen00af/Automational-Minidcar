@@ -24,15 +24,6 @@ from .interfaces import (
 # Orchestrator
 from .orchestrator import Orchestrator
 
-# Legacy types (後方互換性のため残す)
-try:
-    from .types_frame import Frame, ImageBuffer, ColorSpace, PixelFormat
-    from .types_features import Features, PerceptionStatus
-    from .types_vehicle_state import VehicleState
-except ImportError:
-    # これらの型が削除されている場合は無視
-    pass
-
 __all__ = [
     # Domain models
     "DistanceData",
