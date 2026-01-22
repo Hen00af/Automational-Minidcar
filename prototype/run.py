@@ -2,13 +2,13 @@
 """
 実機でオーケストレーターを実行するスクリプト
 """
-from .orchestrator import Orchestrator
-from .sensors import TOFSensor
-from .perception import WallPositionPerception
-from .decision import WallFollowDecision
-from .actuation import PWMActuation
-from .domain.actuation import ActuationCalibration
-from .config import hardware
+from prototype.orchestrator import Orchestrator
+from prototype.sensors import TOFSensor
+from prototype.perception import WallPositionPerception
+from prototype.decision import WallFollowDecision
+from prototype.actuation import PWMActuation
+from prototype.domain.actuation import ActuationCalibration
+from prototype.config import hardware
 
 
 def main():
