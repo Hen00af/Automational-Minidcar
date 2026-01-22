@@ -15,7 +15,7 @@
 ## 使用方法
 
 ```python
-from act.config import hardware, sensors, timing, perception, decision, orchestrator, set_us
+from prototype.config import hardware, sensors, timing, perception, decision, orchestrator, set_us
 
 # ハードウェア設定
 frequency = hardware.pca9685.FREQUENCY

@@ -1,11 +1,11 @@
-# act パッケージ
+# prototype パッケージ
 
 TOFセンサーを用いたミニカー自律走行システムの「インターフェース・制御中核」を担うパッケージです。左側の壁との距離を一定に保つ（左手法/Wall Following）アルゴリズムを実装しています。
 
 ## ディレクトリ構造
 
 ```text
-act/
+prototype/
 ├── domain/              # ドメインモデル（型定義）
 │   ├── __init__.py
 │   ├── distance.py      # DistanceData (Front, Left, Right)
@@ -143,17 +143,29 @@ make clean     # Pythonキャッシュファイルを削除
 ### 基本的な使用例
 
 ```python
-from act.orchestrator import Orchestrator
-from act.sensors import TOFSensor
-from act.perception import WallPositionPerception
-from act.decision import WallFollowDecision
-from act.actuation import PWMActuation
+from prototype.orchestrator import Orchestrator
+from prototype.sensors import TOFSensor
+from prototype.perception import WallPositionPerception
+from prototype.decision import WallFollowDecision
+from prototype.actuation import PWMActuation
+from prototype.domain.actuation import ActuationCalibration
+from prototype.config import hardware
 
-# 実機実装を使用
+# 実機実装を使用（設定ファイルからデフォルト値を読み込む）
 sensor = TOFSensor()
-perception = WallPositionPerception(target_distance_mm=200.0)
-decision = WallFollowDecision(kp=0.03, base_speed=0.5)
+perception = WallPositionPerception()  # 設定ファイルからデフォルト値を読み込む
+decision = WallFollowDecision()  # 設定ファイルからデフォルト値を読み込む
 actuation = PWMActuation()
+
+# キャリブレーションを設定（設定ファイルから値を読み込む）
+calib = ActuationCalibration(
+    steer_center_us=hardware.servo.US_CENTER,
+    steer_left_us=hardware.servo.US_LEFT,
+    steer_right_us=hardware.servo.US_RIGHT,
+    throttle_stop_us=hardware.esc.US_NEUTRAL,
+    throttle_max_us=hardware.esc.US_FORWARD_SLOW
+)
+actuation.configure(calib)
 
 # Orchestratorで統合実行
 orchestrator = Orchestrator(sensor, perception, decision, actuation)

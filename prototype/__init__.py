@@ -1,4 +1,4 @@
-# act package
+# prototype package
 # TOFセンサーを用いたミニカー自律走行システムのインターフェース・制御中核
 
 # Domain models (型定義)

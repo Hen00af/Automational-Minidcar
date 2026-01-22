@@ -1,4 +1,4 @@
-# act/Makefile
+# prototype/Makefile
 .PHONY: run help clean
 
 # Python実行コマンド（必要に応じて python3 や venv の python に変更）
