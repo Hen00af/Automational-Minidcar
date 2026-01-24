@@ -15,7 +15,7 @@ class DistanceData:
     """
     front_mm: float  # 前方距離 (mm)
     left_mm: float   # 左方距離 (mm)
-    right_mm: float  # 右方距離 (mm)
+    left_front_mm: float  # 左前方距離 (mm)
     timestamp: float  # タイムスタンプ（秒）
 
     @classmethod
@@ -32,6 +32,6 @@ class DistanceData:
         return cls(
             front_mm=float(readings.front),
             left_mm=float(readings.left),
-            right_mm=float(readings.right),
+            left_front_mm=float(readings.left_front),
             timestamp=timestamp
         )

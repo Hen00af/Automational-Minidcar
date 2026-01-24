@@ -1,7 +1,7 @@
 # --------------------------------
 # sensors/tof.py
 # TOFセンサー（VL53L0X）を読み取る実装
-# 右、左、前の3つのセンサーをサポート
+# 左前、左、前の3つのセンサーをサポート
 # --------------------------------
 from __future__ import annotations
 
@@ -25,13 +25,13 @@ class TOFReadings:
     """TOFセンサーの読み取り値"""
     front: int  # 前の距離（mm）
     left: int   # 左の距離（mm）
-    right: int  # 右の距離（mm）
+    left_front: int  # 左前の距離（mm）
 
 
 class TOFSensor:
     """
     TOFセンサー（VL53L0X）を読み取るクラス
-    右、左、前の3つのセンサーをサポート
+    左前、左、前の3つのセンサーをサポート
     """
     
     def __init__(
@@ -43,8 +43,8 @@ class TOFSensor:
         初期化
         
         Args:
-            xshut_pins: XSHUTピンのGPIO番号（前、左、右の順）。デフォルトは設定ファイルの値
-            i2c_addresses: I2Cアドレス（前、左、右の順）。デフォルトは設定ファイルの値
+            xshut_pins: XSHUTピンのGPIO番号（前、左、左前の順）。デフォルトは設定ファイルの値
+            i2c_addresses: I2Cアドレス（前、左、左前の順）。デフォルトは設定ファイルの値
         """
         self.xshut_pins = xshut_pins
         self.i2c_addresses = i2c_addresses
@@ -99,7 +99,7 @@ class TOFSensor:
         3つのTOFセンサーから距離を読み取る（TOFReadings形式）
         
         Returns:
-            TOFReadings: 前、左、右の距離（mm）
+            TOFReadings: 前、左、左前の距離（mm）
         """
         if not self._is_initialized:
             self._initialize_hardware()
@@ -109,14 +109,14 @@ class TOFSensor:
         if len(self._sensors) != expected_count:
             raise RuntimeError(f"Expected {expected_count} sensors, but {len(self._sensors)} sensors are initialized")
         
-        # 前、左、右の順でループして読み取り
+        # 前、左、左前の順でループして読み取り
         readings_list = []
         for sensor in self._sensors:
             readings_list.append(sensor.range)
         
         # TOFReadings形式に変換（現在は3つのセンサーを想定）
         if len(readings_list) >= 3:
-            return TOFReadings(front=readings_list[0], left=readings_list[1], right=readings_list[2])
+            return TOFReadings(front=readings_list[0], left=readings_list[1], left_front=readings_list[2])
         else:
             raise RuntimeError(f"Expected at least 3 sensor readings, but got {len(readings_list)}")
     
@@ -126,7 +126,7 @@ class TOFSensor:
         DistanceSensorModuleプロトコルに適合
         
         Returns:
-            DistanceData: 前、左、右の距離データ（タイムスタンプ付き）
+            DistanceData: 前、左、左前の距離データ（タイムスタンプ付き）
         """
         readings = self.read_tof_readings()
         return DistanceData.from_tof_readings(readings)
@@ -143,8 +143,8 @@ class TOFSensor:
             self._initialize_hardware()
         return self._sensors[1].range
     
-    def read_right(self) -> int:
-        """右のセンサーから距離を読み取る（mm）"""
+    def read_left_front(self) -> int:
+        """左前のセンサーから距離を読み取る（mm）"""
         if not self._is_initialized:
             self._initialize_hardware()
         return self._sensors[2].range
