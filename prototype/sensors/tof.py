@@ -79,12 +79,16 @@ class TOFSensor:
                 # 起動直後はデフォルトアドレスにいるので、それを捕まえる
                 sensor = adafruit_vl53l0x.VL53L0X(self._i2c, address=sensors.vl53l0x.DEFAULT_ADDRESS)
                 
+                # センサーの計測時間を設定（設定ファイルから取得）
+                sensor.measurement_timing_budget = sensors.vl53l0x.MEASUREMENT_TIMING_BUDGET
+                
                 # 重ならないようにアドレスを変えていく
                 new_address = self.i2c_addresses[i]
                 sensor.set_address(new_address)
                 
                 self._sensors.append(sensor)
-                print(f"[TOF] センサー {i} ({'前' if i == 0 else '左' if i == 1 else '右'}) をアドレス {hex(new_address)} で初期化しました", file=sys.stderr)
+                sensor_name = sensors.vl53l0x.SENSOR_NAMES[i] if i < len(sensors.vl53l0x.SENSOR_NAMES) else f"センサー{i}"
+                print(f"[TOF] センサー {i} ({sensor_name}) をアドレス {hex(new_address)} で初期化しました", file=sys.stderr)
             
             self._is_initialized = True
         except Exception as e:
@@ -100,9 +104,10 @@ class TOFSensor:
         if not self._is_initialized:
             self._initialize_hardware()
         
-        # センサーが3つあることを確認
-        if len(self._sensors) != 3:
-            raise RuntimeError(f"Expected 3 sensors, but {len(self._sensors)} sensors are initialized")
+        # センサー数が期待値と一致することを確認
+        expected_count = sensors.vl53l0x.NUM_SENSORS
+        if len(self._sensors) != expected_count:
+            raise RuntimeError(f"Expected {expected_count} sensors, but {len(self._sensors)} sensors are initialized")
         
         # 前、左、右の順で読み取り
         front = self._sensors[0].range
