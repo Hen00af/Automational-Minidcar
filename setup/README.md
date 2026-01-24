@@ -390,7 +390,7 @@ AttributeError: ...
 `adafruit-blinka` などのライブラリは実機のRaspberry Pi環境でのみ動作します。Docker環境（Windows/Mac）ではハードウェア検出に失敗します。
 
 **解決方法:**
-`kudou_test/` ディレクトリ内のスクリプトは、自動的にモック実装を使用するように修正されています。スクリプトの先頭で `hardware_import` を使用することで、Docker環境でも動作します：
+`sample/` ディレクトリ内のスクリプトは、自動的にモック実装を使用するように修正されています。スクリプトの先頭で `hardware_import` を使用することで、Docker環境でも動作します：
 
 ```python
 # ハードウェアモジュールの自動インポート（Raspberry Pi環境では実機、それ以外ではモック）

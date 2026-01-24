@@ -6,28 +6,18 @@ TOFセンサーを用いたミニカー自律走行システム
 
 ## 構成
 
-- **`act/`**: 実機用パッケージ（Raspberry Piで動作）
-- **`mock/`**: モック実装パッケージ（開発・テスト用、ハードウェア不要）
+- **`prototype/`**: 実機用パッケージ（Raspberry Piで動作）
+- **`sample/`**: サンプルコード・テストコード
 
 ## クイックスタート
-
-### モック実装でテスト
-
-```bash
-cd mock
-make run
-# または
-python -m mock
-```
 
 ### 実機で実行
 
 ```bash
-cd act
+cd prototype
 make run
 ```
 
 ## 詳細
 
-- `act/README.md`: 実機パッケージの詳細
-- `mock/README.md`: モックパッケージの詳細
+- `prototype/README.md`: 実機パッケージの詳細
