@@ -37,9 +37,9 @@ class ESCConfig:
 @dataclass(frozen=True)
 class ServoConfig:
     """サーボ制御設定（マイクロ秒）"""
-    US_LEFT: Final[int] = 1300    # 左
+    US_LEFT: Final[int] = 1200    # 左
     US_CENTER: Final[int] = 1500   # 中央
-    US_RIGHT: Final[int] = 1700    # 右
+    US_RIGHT: Final[int] = 1800    # 右
 
 
 @dataclass(frozen=True)
