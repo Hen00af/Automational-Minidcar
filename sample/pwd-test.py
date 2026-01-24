@@ -1,42 +1,51 @@
-import sys
 import time
-from pathlib import Path
+# ハードウェアモジュールの自動インポート（Raspberry Pi環境では実機、それ以外ではモック）
+from hardware_import import board, busio
+from adafruit_pca9685 import PCA9685
 
-# prototypeモジュールをインポートできるようにパスを追加
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# --------------------------
+# 初期化
+# --------------------------
+i2c = busio.I2C(board.SCL, board.SDA)
+pca = PCA9685(i2c)
+pca.frequency = 50  # ESC/サーボは50Hz
 
-# prototypeの設定とユーティリティをインポート
-from prototype.config import hardware, timing
-from prototype.config.utils import set_us, initialize_pca9685
+esc = pca.channels[0]    # ESC
+
+# μs → duty_cycle 変換
+def set_us(ch, us):
+    ch.duty_cycle = int(us / 20000 * 65535)
 
 print("=== PWM可変テスト開始 ===")
 print("1500μsから1000μsまで可変で送信します")
 
 # --------------------------
-# 初期化（prototypeのパターンを使用）
+# ① 初期値（ニュートラル）
 # --------------------------
-pca, esc, servo = initialize_pca9685()
+print("ESC: Neutral (1500μs)")
+set_us(esc, 1500)
+time.sleep(2)
 
-# 初期値を1500μs（ニュートラル）に設定
-print(f"ESC: 初期値 {hardware.esc.US_NEUTRAL}μs (ニュートラル)")
-set_us(esc, hardware.esc.US_NEUTRAL)
-time.sleep(timing.test.MOVE_WAIT)
-
-# 1500から1000まで10ずつ減らしていく
+# --------------------------
+# ② 1500から1000まで10ずつ減らしていく
+# --------------------------
 for us_value in range(1500, 990, -10):  # 1500から1000まで10ずつ減らす
     print(f"ESC: {us_value}μs")
     set_us(esc, us_value)
     time.sleep(1)  # 各値で1秒待機
 
-# 最後に1000μsを設定
+# --------------------------
+# ③ 最後に1000μsを設定
+# --------------------------
 print("ESC: 1000μs")
 set_us(esc, 1000)
-time.sleep(timing.test.MOVE_WAIT)
+time.sleep(2)
 
-# 停止（ニュートラルに戻す）
-print(f"ESC: Neutral ({hardware.esc.US_NEUTRAL}μs) に戻す")
-set_us(esc, hardware.esc.US_NEUTRAL)
-time.sleep(timing.test.MOVE_WAIT)
+# --------------------------
+# ④ 停止（ニュートラルに戻す）
+# --------------------------
+print("ESC: Neutral (1500μs) に戻す")
+set_us(esc, 1500)
+time.sleep(2)
 
 print("=== テスト終了 ===")
