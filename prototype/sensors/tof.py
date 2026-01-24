@@ -109,12 +109,16 @@ class TOFSensor:
         if len(self._sensors) != expected_count:
             raise RuntimeError(f"Expected {expected_count} sensors, but {len(self._sensors)} sensors are initialized")
         
-        # 前、左、右の順で読み取り
-        front = self._sensors[0].range
-        left = self._sensors[1].range
-        right = self._sensors[2].range
+        # 前、左、右の順でループして読み取り
+        readings_list = []
+        for sensor in self._sensors:
+            readings_list.append(sensor.range)
         
-        return TOFReadings(front=front, left=left, right=right)
+        # TOFReadings形式に変換（現在は3つのセンサーを想定）
+        if len(readings_list) >= 3:
+            return TOFReadings(front=readings_list[0], left=readings_list[1], right=readings_list[2])
+        else:
+            raise RuntimeError(f"Expected at least 3 sensor readings, but got {len(readings_list)}")
     
     def read(self) -> DistanceData:
         """
