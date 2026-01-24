@@ -18,8 +18,8 @@ class WallFollowDecisionConfig:
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
     
     # 前方に壁がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.0  # 前方に壁がある場合の速度
-    FRONT_BLOCKED_STEERING: Final[float] = -0.5  # 前方に壁がある場合のステアリング（右折用、負の値）
+    FRONT_BLOCKED_SPEED: Final[float] = 0.3  # 前方に壁がある場合の速度
+    FRONT_BLOCKED_STEERING: Final[float] = -1.0  # 前方に壁がある場合のステアリング（右折用、負の値、フル右折）
     
     # 左コーナー時の設定
     CORNER_LEFT_SPEED: Final[float] = 0.3  # 左コーナー時の速度
