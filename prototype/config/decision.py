@@ -12,6 +12,8 @@ from typing import Final
 class WallFollowDecisionConfig:
     """壁沿い走行判断モジュール設定"""
     KP: Final[float] = 0.01  # P制御の比例ゲイン
+    KD: Final[float] = 0.001  # D制御の微分ゲイン（デフォルトは0.0で無効）
+    DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
     BASE_SPEED: Final[float] = 0.3  # 通常走行時の基本速度 [0.0, 1.0]
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
     
