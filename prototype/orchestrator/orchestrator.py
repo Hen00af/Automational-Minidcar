@@ -137,7 +137,7 @@ class Orchestrator:
                 
                 # ヘッダーを一度だけ出力
                 if not header_printed:
-                    print("TIME  | L_DIST | ERROR | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS")
+                    print("TIME  | L_DIST | LF_DIST | ERROR | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS")
                     header_printed = True
                 
                 # 詳細ログ出力（一定間隔で）
@@ -323,6 +323,7 @@ class Orchestrator:
         # データ取得
         timestamp = elapsed_time
         l_dist = distance_data.left_mm
+        lf_dist = distance_data.left_front_mm
         error = features.error_from_target
         steer = command.steer
         speed = command.throttle
@@ -333,13 +334,14 @@ class Orchestrator:
         # パイプ区切りのテーブル形式で出力
         # TIME: 5文字幅（右寄せ）、小数点1桁 + "s"
         # L_DIST: 4文字幅（右寄せ） + "mm"
+        # LF_DIST: 5文字幅（右寄せ） + "mm"
         # ERROR: 4文字幅（右寄せ）、符号付き + "mm"
         # STEER: 5文字幅（右寄せ）、符号付き、小数点2桁
         # THROTTLE: 6文字幅（右寄せ）、小数点2桁 + 空白調整
         # STEER_PWM: 9文字幅（右寄せ） + "us"
         # THROTTLE_PWM: 11文字幅（右寄せ） + "us"
         # STATUS: そのまま文字列
-        print(f"{timestamp:>5.1f}s | {l_dist:>4.0f}mm | {error:>+4.0f}mm | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us | {status_str}")
+        print(f"{timestamp:>5.1f}s | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+4.0f}mm | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us | {status_str}")
     
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
         """
