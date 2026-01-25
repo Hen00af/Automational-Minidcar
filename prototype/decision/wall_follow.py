@@ -62,6 +62,9 @@ class WallFollowDecision:
         
         # frame_idカウンター
         self._frame_id = 0
+        
+        # 前回の状態を追跡（D制御器のリセット判定用）
+        self._prev_was_front_blocked: bool = False
     
     def decide(self, features: WallFeatures) -> Command:
         """
@@ -76,8 +79,13 @@ class WallFollowDecision:
         current_time = time.time()
         self._frame_id += 1
         
+        # 前方ブロック状態から通常状態に遷移した場合、D制御器をリセット
+        if self._prev_was_front_blocked and not features.is_front_blocked:
+            self._differential_controller.reset()
+        
         # 1. 前方に壁がある場合：停止または右折
         if features.is_front_blocked:
+            self._prev_was_front_blocked = True
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
@@ -86,6 +94,9 @@ class WallFollowDecision:
                 mode=DriveMode.STOP if self.front_blocked_speed == 0.0 else DriveMode.SLOW,
                 reason="front_blocked"
             )
+        
+        # 前回の状態を更新
+        self._prev_was_front_blocked = False
         
         # 2. 左コーナー（左に壁がない）の場合：左折
         if features.is_corner_left:
