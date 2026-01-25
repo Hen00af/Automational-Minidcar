@@ -8,7 +8,7 @@ TOFセンサーを用いたミニカー自律走行システムの「インタ�
 prototype/
 ├── domain/              # ドメインモデル（型定義）
 │   ├── __init__.py
-│   ├── distance.py      # DistanceData (Front, Left, Right)
+│   ├── distance.py      # DistanceData (Front, Left, LeftFront)
 │   ├── features.py      # WallFeatures, GapError
 │   ├── command.py       # Command, DriveMode
 │   └── actuation.py     # ActuationStatus, ActuationCalibration, Telemetry
@@ -48,7 +48,7 @@ prototype/
 ドメインモデル（型定義）を集約したディレクトリ。各モジュール間でやり取りするデータ構造を定義します。
 
 - **`distance.py`**: TOFセンサーから取得した距離データの型定義
-  - `DistanceData`: 前・左・右の距離データ（タイムスタンプ付き）
+  - `DistanceData`: 前・左・左前の距離データ（タイムスタンプ付き）
 - **`features.py`**: 知覚モジュールが抽出した特徴量の型定義
   - `WallFeatures`: 壁との誤差、前方障害物有無、左コーナー判定など
 - **`command.py`**: 判断モジュールが生成する制御コマンドの型定義
@@ -81,7 +81,7 @@ prototype/
 TOFセンサー（距離センサー）の実装モジュール。
 
 - **`tof.py`**: 実機用のVL53L0X実装（`TOFSensor`クラス）
-  - 3つのVL53L0Xセンサー（前・左・右）をI2Cで制御
+  - 3つのVL53L0Xセンサー（前・左・左前）をI2Cで制御
   - XSHUTピンを使用してI2Cアドレスを設定
 
 ### `perception/`
@@ -115,6 +115,7 @@ TOFセンサー（距離センサー）の実装モジュール。
   - `run_once()`: 1サイクル分の処理（計測→知覚→判断→実行）
   - `run_loop()`: 連続実行ループ（ループ間隔・ログ間隔を設定可能）
   - `emergency_stop()`: 緊急停止
+  - `timing_log_path` にセンサー/駆動/ループの実測周波数（Hz）を出力
 
 ## 実行方法
 
@@ -181,7 +182,7 @@ finally:
 
 ```
 ┌─────────────┐
-│   Sensor    │  DistanceData (front, left, right, timestamp)
+│   Sensor    │  DistanceData (front, left, left_front, timestamp)
 └──────┬──────┘
        │
        ▼

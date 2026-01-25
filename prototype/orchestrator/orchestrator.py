@@ -4,6 +4,8 @@
 # --------------------------------
 from __future__ import annotations
 
+import logging
+import os
 from typing import Optional
 
 from ..interfaces.protocols import DistanceSensorModule, Perception, Decision, Actuation
@@ -24,7 +26,8 @@ class Orchestrator:
         sensor: DistanceSensorModule,
         perception: Perception,
         decision: Decision,
-        actuation: Actuation
+        actuation: Actuation,
+        timing_log_path: Optional[str] = None
     ):
         """
         初期化
@@ -34,11 +37,20 @@ class Orchestrator:
             perception: 知覚モジュール
             decision: 判断モジュール
             actuation: 駆動モジュール
+            timing_log_path: タイミングログファイルのパス（Noneの場合はログを出力しない）
         """
         self.sensor = sensor
         self.perception = perception
         self.decision = decision
         self.actuation = actuation
+        self._last_sensor_time: Optional[float] = None
+        self._last_actuation_time: Optional[float] = None
+        self._last_loop_time: Optional[float] = None
+        self._timing_logger = self._setup_timing_logger(timing_log_path)
+        import time
+        self._timing_start_time = time.time()
+        if self._timing_logger:
+            self._timing_logger.info("event=run_start t=%.3fs", 0.0)
     
     def run_once(self) -> Telemetry:
         """
@@ -47,17 +59,36 @@ class Orchestrator:
         Returns:
             Telemetry: 駆動モジュールの適用結果
         """
+        import time
+        loop_idx = 0
+        t0 = time.perf_counter()
+        
         # 1. 計測 (Measure)
+        t1 = time.perf_counter()
         distance_data = self.sensor.read()
+        t2 = time.perf_counter()
+        self._log_stage(loop_idx, "sensor", t1, t2)
         
         # 2. 知覚 (Perceive)
+        t3 = time.perf_counter()
         features = self.perception.analyze(distance_data)
+        t4 = time.perf_counter()
+        self._log_stage(loop_idx, "perception", t3, t4)
         
         # 3. 判断 (Decide)
+        t5 = time.perf_counter()
         command = self.decision.decide(features)
+        t6 = time.perf_counter()
+        self._log_stage(loop_idx, "decision", t5, t6)
         
         # 4. 実行 (Act)
+        t7 = time.perf_counter()
         telemetry = self.actuation.apply(command)
+        t8 = time.perf_counter()
+        self._log_stage(loop_idx, "actuation", t7, t8)
+        
+        self._log_event("loop_end")
+        self._log_frequency(loop_idx, t1, t7, t0)
         return telemetry
     
     def run_loop(self, max_iterations: Optional[int] = None, loop_interval_sec: float = orchestrator.LOOP_INTERVAL_SEC, log_interval_sec: float = orchestrator.LOG_INTERVAL_SEC) -> None:
@@ -78,14 +109,35 @@ class Orchestrator:
         
         try:
             while max_iterations is None or iteration < max_iterations:
+                t0 = time.perf_counter()
+                
+                # 1. 計測 (Measure)
+                t1 = time.perf_counter()
                 distance_data = self.sensor.read()
+                t2 = time.perf_counter()
+                self._log_stage(iteration, "sensor", t1, t2)
+                
+                # 2. 知覚 (Perceive)
+                t3 = time.perf_counter()
                 features = self.perception.analyze(distance_data)
+                t4 = time.perf_counter()
+                self._log_stage(iteration, "perception", t3, t4)
+                
+                # 3. 判断 (Decide)
+                t5 = time.perf_counter()
                 command = self.decision.decide(features)
+                t6 = time.perf_counter()
+                self._log_stage(iteration, "decision", t5, t6)
+                
+                # 4. 実行 (Act)
+                t7 = time.perf_counter()
                 telemetry = self.actuation.apply(command)
+                t8 = time.perf_counter()
+                self._log_stage(iteration, "actuation", t7, t8)
                 
                 # ヘッダーを一度だけ出力
                 if not header_printed:
-                    print("TIME  | L_DIST | ERROR | STEER | THROTTLE | STATUS")
+                    print("TIME  | L_DIST | LF_DIST | ERROR | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS")
                     header_printed = True
                 
                 # 詳細ログ出力（一定間隔で）
@@ -96,6 +148,9 @@ class Orchestrator:
                     self._log_cycle(elapsed_time, distance_data, features, command, telemetry)
                     last_log_time = current_time
                 
+                self._log_event("loop_end")
+                self._log_frequency(iteration, t1, t7, t0)
+                
                 if loop_interval_sec > 0:
                     time.sleep(loop_interval_sec)
         except KeyboardInterrupt:
@@ -105,6 +160,148 @@ class Orchestrator:
             print(f"\n[Orchestrator] Error occurred: {e}")
             self.emergency_stop(f"error: {str(e)}")
     
+    def _setup_timing_logger(self, timing_log_path: Optional[str]) -> Optional[logging.Logger]:
+        """
+        タイミングロガーをセットアップ
+        
+        Args:
+            timing_log_path: ログファイルのパス（Noneの場合はログを出力しない）
+            
+        Returns:
+            設定されたロガー。timing_log_pathがNoneの場合はNone
+        """
+        if timing_log_path is None:
+            return None
+        
+        # ログディレクトリが存在しない場合は作成
+        log_dir = os.path.dirname(timing_log_path)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        # ロガーを作成
+        logger = logging.getLogger(f"{__name__}.timing")
+        logger.setLevel(logging.INFO)
+        
+        # 既存のハンドラーをクリア（重複を防ぐ）
+        logger.handlers.clear()
+        
+        # ファイルハンドラーを作成
+        file_handler = logging.FileHandler(timing_log_path, mode='w', encoding='utf-8')
+        file_handler.setLevel(logging.INFO)
+        
+        # フォーマッターを設定（シンプルな形式）
+        formatter = logging.Formatter('%(message)s')
+        file_handler.setFormatter(formatter)
+        
+        logger.addHandler(file_handler)
+        logger.propagate = False  # 親ロガーに伝播しない
+        
+        return logger
+
+    def _log_event(self, event: str) -> None:
+        """
+        イベントをログに記録
+        
+        Args:
+            event: イベント名（例: "run_start", "loop_end"）
+        """
+        if not self._timing_logger:
+            return
+        
+        import time
+        elapsed_sec = time.time() - self._timing_start_time
+        self._timing_logger.info("event=%s t=%.3fs", event, elapsed_sec)
+
+    def _log_stage(self, loop_idx: int, stage_name: str, start_time: float, end_time: float) -> None:
+        """
+        各ステージの処理時間をログに記録
+        
+        Args:
+            loop_idx: ループインデックス
+            stage_name: ステージ名（"sensor", "perception", "decision", "actuation"）
+            start_time: 開始時刻
+            end_time: 終了時刻
+        """
+        if not self._timing_logger:
+            return
+        
+        duration = end_time - start_time
+        import time
+        elapsed_sec = time.time() - self._timing_start_time
+        self._timing_logger.info(
+            "t=%.3fs loop=%d stage=%s duration=%.6fs",
+            elapsed_sec,
+            loop_idx,
+            stage_name,
+            duration
+        )
+
+    def _log_frequency(self, loop_idx: int, sensor_time: float, actuation_time: float, loop_time: float) -> None:
+        """
+        センサー/駆動/ループの実測周波数（Hz）をログに記録
+        
+        Args:
+            loop_idx: ループインデックス
+            sensor_time: センサー読み取り時刻
+            actuation_time: 駆動実行時刻
+            loop_time: ループ開始時刻
+        """
+        if not self._timing_logger:
+            return
+
+        sensor_hz = self._calculate_hz(sensor_time, self._last_sensor_time)
+        actuation_hz = self._calculate_hz(actuation_time, self._last_actuation_time)
+        loop_hz = self._calculate_hz(loop_time, self._last_loop_time)
+
+        import time
+        elapsed_sec = time.time() - self._timing_start_time
+        self._timing_logger.info(
+            "t=%.3fs loop=%d metric=frequency sensor_hz=%s actuation_hz=%s loop_hz=%s",
+            elapsed_sec,
+            loop_idx,
+            self._format_hz(sensor_hz),
+            self._format_hz(actuation_hz),
+            self._format_hz(loop_hz),
+        )
+
+        self._last_sensor_time = sensor_time
+        self._last_actuation_time = actuation_time
+        self._last_loop_time = loop_time
+
+    @staticmethod
+    def _calculate_hz(current_time: float, last_time: Optional[float]) -> Optional[float]:
+        """
+        前回時刻と現在時刻から周波数（Hz）を計算
+        
+        Args:
+            current_time: 現在時刻
+            last_time: 前回時刻
+            
+        Returns:
+            周波数（Hz）。初回や時刻が無効な場合はNone
+        """
+        if last_time is None:
+            return None
+        dt = current_time - last_time
+        if dt <= 0:
+            return None
+        return 1.0 / dt
+
+    @staticmethod
+    def _format_hz(value: Optional[float]) -> str:
+        """
+        周波数値を文字列にフォーマット
+        
+        Args:
+            value: 周波数値（Hz）
+            
+        Returns:
+            フォーマットされた文字列。Noneの場合は"NA"
+        """
+        if value is None:
+            return "NA"
+        return f"{value:.2f}"
+
     def _log_cycle(
         self,
         elapsed_time: float,
@@ -126,19 +323,25 @@ class Orchestrator:
         # データ取得
         timestamp = elapsed_time
         l_dist = distance_data.left_mm
+        lf_dist = distance_data.left_front_mm
         error = features.error_from_target
         steer = command.steer
         speed = command.throttle
+        steer_pwm = telemetry.steer_pwm_us if telemetry.steer_pwm_us is not None else 0
+        throttle_pwm = telemetry.throttle_pwm_us if telemetry.throttle_pwm_us is not None else 0
         status_str = telemetry.status.value if hasattr(telemetry.status, 'value') else str(telemetry.status)
         
         # パイプ区切りのテーブル形式で出力
         # TIME: 5文字幅（右寄せ）、小数点1桁 + "s"
         # L_DIST: 4文字幅（右寄せ） + "mm"
+        # LF_DIST: 5文字幅（右寄せ） + "mm"
         # ERROR: 4文字幅（右寄せ）、符号付き + "mm"
         # STEER: 5文字幅（右寄せ）、符号付き、小数点2桁
         # THROTTLE: 6文字幅（右寄せ）、小数点2桁 + 空白調整
+        # STEER_PWM: 9文字幅（右寄せ） + "us"
+        # THROTTLE_PWM: 11文字幅（右寄せ） + "us"
         # STATUS: そのまま文字列
-        print(f"{timestamp:>5.1f}s | {l_dist:>4.0f}mm | {error:>+4.0f}mm | {steer:>+5.2f} | {speed:>6.2f}   | {status_str}")
+        print(f"{timestamp:>5.1f}s | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+4.0f}mm | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us | {status_str}")
     
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
         """

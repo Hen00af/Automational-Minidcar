@@ -1,7 +1,7 @@
 # --------------------------------
 # sensors/tof.py
 # TOFセンサー（VL53L0X）を読み取る実装
-# 右、左、前の3つのセンサーをサポート
+# 左前、左、前の3つのセンサーをサポート
 # --------------------------------
 from __future__ import annotations
 
@@ -25,13 +25,13 @@ class TOFReadings:
     """TOFセンサーの読み取り値"""
     front: int  # 前の距離（mm）
     left: int   # 左の距離（mm）
-    right: int  # 右の距離（mm）
+    left_front: int  # 左前の距離（mm）
 
 
 class TOFSensor:
     """
     TOFセンサー（VL53L0X）を読み取るクラス
-    右、左、前の3つのセンサーをサポート
+    左前、左、前の3つのセンサーをサポート
     """
     
     def __init__(
@@ -43,8 +43,8 @@ class TOFSensor:
         初期化
         
         Args:
-            xshut_pins: XSHUTピンのGPIO番号（前、左、右の順）。デフォルトは設定ファイルの値
-            i2c_addresses: I2Cアドレス（前、左、右の順）。デフォルトは設定ファイルの値
+            xshut_pins: XSHUTピンのGPIO番号（前、左、左前の順）。デフォルトは設定ファイルの値
+            i2c_addresses: I2Cアドレス（前、左、左前の順）。デフォルトは設定ファイルの値
         """
         self.xshut_pins = xshut_pins
         self.i2c_addresses = i2c_addresses
@@ -79,12 +79,16 @@ class TOFSensor:
                 # 起動直後はデフォルトアドレスにいるので、それを捕まえる
                 sensor = adafruit_vl53l0x.VL53L0X(self._i2c, address=sensors.vl53l0x.DEFAULT_ADDRESS)
                 
+                # センサーの計測時間を設定（設定ファイルから取得）
+                sensor.measurement_timing_budget = sensors.vl53l0x.MEASUREMENT_TIMING_BUDGET
+                
                 # 重ならないようにアドレスを変えていく
                 new_address = self.i2c_addresses[i]
                 sensor.set_address(new_address)
                 
                 self._sensors.append(sensor)
-                print(f"[TOF] センサー {i} ({'前' if i == 0 else '左' if i == 1 else '右'}) をアドレス {hex(new_address)} で初期化しました", file=sys.stderr)
+                sensor_name = sensors.vl53l0x.SENSOR_NAMES[i] if i < len(sensors.vl53l0x.SENSOR_NAMES) else f"センサー{i}"
+                print(f"[TOF] センサー {i} ({sensor_name}) をアドレス {hex(new_address)} で初期化しました", file=sys.stderr)
             
             self._is_initialized = True
         except Exception as e:
@@ -95,21 +99,26 @@ class TOFSensor:
         3つのTOFセンサーから距離を読み取る（TOFReadings形式）
         
         Returns:
-            TOFReadings: 前、左、右の距離（mm）
+            TOFReadings: 前、左、左前の距離（mm）
         """
         if not self._is_initialized:
             self._initialize_hardware()
         
-        # センサーが3つあることを確認
-        if len(self._sensors) != 3:
-            raise RuntimeError(f"Expected 3 sensors, but {len(self._sensors)} sensors are initialized")
+        # センサー数が期待値と一致することを確認
+        expected_count = sensors.vl53l0x.NUM_SENSORS
+        if len(self._sensors) != expected_count:
+            raise RuntimeError(f"Expected {expected_count} sensors, but {len(self._sensors)} sensors are initialized")
         
-        # 前、左、右の順で読み取り
-        front = self._sensors[0].range
-        left = self._sensors[1].range
-        right = self._sensors[2].range
+        # 前、左、左前の順でループして読み取り
+        readings_list = []
+        for sensor in self._sensors:
+            readings_list.append(sensor.range)
         
-        return TOFReadings(front=front, left=left, right=right)
+        # TOFReadings形式に変換（現在は3つのセンサーを想定）
+        if len(readings_list) >= 3:
+            return TOFReadings(front=readings_list[0], left=readings_list[1], left_front=readings_list[2])
+        else:
+            raise RuntimeError(f"Expected at least 3 sensor readings, but got {len(readings_list)}")
     
     def read(self) -> DistanceData:
         """
@@ -117,7 +126,7 @@ class TOFSensor:
         DistanceSensorModuleプロトコルに適合
         
         Returns:
-            DistanceData: 前、左、右の距離データ（タイムスタンプ付き）
+            DistanceData: 前、左、左前の距離データ（タイムスタンプ付き）
         """
         readings = self.read_tof_readings()
         return DistanceData.from_tof_readings(readings)
@@ -134,8 +143,8 @@ class TOFSensor:
             self._initialize_hardware()
         return self._sensors[1].range
     
-    def read_right(self) -> int:
-        """右のセンサーから距離を読み取る（mm）"""
+    def read_left_front(self) -> int:
+        """左前のセンサーから距離を読み取る（mm）"""
         if not self._is_initialized:
             self._initialize_hardware()
         return self._sensors[2].range
