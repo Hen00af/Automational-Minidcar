@@ -324,12 +324,22 @@ class Orchestrator:
         timestamp = elapsed_time
         l_dist = distance_data.left_mm
         lf_dist = distance_data.left_front_mm
+        front_dist = distance_data.front_mm
         error = features.error_from_target
         steer = command.steer
         speed = command.throttle
         steer_pwm = telemetry.steer_pwm_us if telemetry.steer_pwm_us is not None else 0
         throttle_pwm = telemetry.throttle_pwm_us if telemetry.throttle_pwm_us is not None else 0
         status_str = telemetry.status.value if hasattr(telemetry.status, 'value') else str(telemetry.status)
+
+        if self._timing_logger:
+            self._timing_logger.info(
+                "t=%.3fs loop=detail metric=sensor front_mm=%.0f left_mm=%.0f left_front_mm=%.0f",
+                timestamp,
+                front_dist,
+                l_dist,
+                lf_dist,
+            )
         
         # パイプ区切りのテーブル形式で出力
         # TIME: 5文字幅（右寄せ）、小数点1桁 + "s"
