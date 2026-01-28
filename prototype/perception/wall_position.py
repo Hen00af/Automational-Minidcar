@@ -50,13 +50,21 @@ class WallPositionPerception:
         # 左壁との距離誤差（P制御の入力値になる）
         # 正の値：壁から離れすぎている（左に寄る必要がある）
         # 負の値：壁に近すぎる（右に寄る必要がある）
-        error = data.left_mm - self.target_distance_mm
-        
+        left_error = data.left_mm - self.target_distance_mm
+        left_front_error = data.left_front_mm - self.target_distance_mm
+        error = (left_error + left_front_error) / 2.0
+
         # 前方の壁判定（閾値以内なら壁あり）
-        front_blocked = data.front_mm < self.front_blocked_threshold_mm
-        
+        front_blocked = (
+            data.front_mm < self.front_blocked_threshold_mm
+            or data.left_front_mm < self.front_blocked_threshold_mm
+        )
+
         # 左側のコーナー判定（距離が閾値以上なら壁がない）
-        is_corner_left = data.left_mm > self.corner_left_threshold_mm
+        is_corner_left = (
+            data.left_mm > self.corner_left_threshold_mm
+            and data.left_front_mm > self.corner_left_threshold_mm
+        )
         
         return WallFeatures(
             error_from_target=error,
