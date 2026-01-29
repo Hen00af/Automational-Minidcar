@@ -4,6 +4,7 @@
 # --------------------------------
 from __future__ import annotations
 
+import math
 from ..domain.distance import DistanceData
 from ..domain.features import WallFeatures
 from ..config import perception
@@ -23,7 +24,8 @@ class WallPositionPerception:
         self,
         target_distance_mm: float = perception.wall_position.TARGET_DISTANCE_MM,
         front_blocked_threshold_mm: float = perception.wall_position.FRONT_BLOCKED_THRESHOLD_MM,
-        corner_left_threshold_mm: float = perception.wall_position.CORNER_LEFT_THRESHOLD_MM
+        corner_left_threshold_mm: float = perception.wall_position.CORNER_LEFT_THRESHOLD_MM,
+        left_front_sensor_angle_deg: float = perception.wall_position.LEFT_FRONT_SENSOR_ANGLE_DEG
     ):
         """
         初期化
@@ -32,10 +34,12 @@ class WallPositionPerception:
             target_distance_mm: 左壁との目標距離（mm）。デフォルトは設定ファイルの値
             front_blocked_threshold_mm: 前方が壁と判定する距離の閾値（mm）。デフォルトは設定ファイルの値
             corner_left_threshold_mm: 左側がコーナー（壁がない）と判定する距離の閾値（mm）。デフォルトは設定ファイルの値
+            left_front_sensor_angle_deg: 左前センサーの取り付け角度（度）。デフォルトは設定ファイルの値
         """
         self.target_distance_mm = target_distance_mm
         self.front_blocked_threshold_mm = front_blocked_threshold_mm
         self.corner_left_threshold_mm = corner_left_threshold_mm
+        self.left_front_sensor_angle_deg = left_front_sensor_angle_deg
     
     def analyze(self, data: DistanceData) -> WallFeatures:
         """
@@ -51,7 +55,12 @@ class WallPositionPerception:
         # 正の値：壁から離れすぎている（左に寄る必要がある）
         # 負の値：壁に近すぎる（右に寄る必要がある）
         left_error = data.left_mm - self.target_distance_mm
-        left_front_error = data.left_front_mm - self.target_distance_mm
+        
+        # 左前センサーの値を補正（斜めに取り付けられている場合、垂直距離に変換）
+        # distance * cos(angle)
+        left_front_perp_mm = data.left_front_mm * math.cos(math.radians(self.left_front_sensor_angle_deg))
+        left_front_error = left_front_perp_mm - self.target_distance_mm
+        
         error = (left_error + left_front_error) / 2.0
 
         # 前方の壁判定（閾値以内なら壁あり）
