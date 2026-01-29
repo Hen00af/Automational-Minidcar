@@ -76,15 +76,15 @@ class WallFollowDecision:
         self._frame_id += 1
 
         # 1. 左コーナー（左に壁がない）の場合：左折
-        # if features.is_corner_left:
-        #     return Command(
-        #         frame_id=self._frame_id,
-        #         t_capture_sec=current_time,
-        #         steer=self.corner_left_steering,  # 左に曲がる（正の値）
-        #         throttle=self.corner_left_speed,
-        #         mode=DriveMode.SLOW,
-        #         reason="corner_left"
-        #     )
+        if not features.is_left_wall:
+            return Command(
+                frame_id=self._frame_id,
+                t_capture_sec=current_time,
+                steer=self.corner_left_steering,  # 左に曲がる（正の値）
+                throttle=self.corner_left_speed,
+                mode=DriveMode.SLOW,
+                reason="corner_left",
+            )
 
         # 2. 前方に壁がある場合：停止または右折
         if features.is_front_blocked:
