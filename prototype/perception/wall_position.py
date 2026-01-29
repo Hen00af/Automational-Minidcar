@@ -56,7 +56,7 @@ class WallPositionPerception:
         front_blocked = data.front_mm < self.front_blocked_threshold_mm
 
         # 左側の壁判定（閾値以内なら壁あり）
-        is_left_wall = data.left_mm < self.corner_left_threshold_mm
+        is_left_wall = data.left_front_mm < self.corner_left_threshold_mm
 
         return WallFeatures(
             error_from_target=error,
