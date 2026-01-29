@@ -33,13 +33,8 @@ class DistanceSensorModule(Protocol):
 class Perception(Protocol):
     """
     Perception external I/F:
-    - カメラ版: Frame -> Features
     - 距離センサー版: DistanceData -> WallFeatures
     """
-    def process(self, frame) -> None:
-        """カメラ版: Frame -> Features"""
-        ...
-    
     def analyze(self, data: DistanceData) -> WallFeatures:
         """距離センサー版: DistanceData -> WallFeatures"""
         ...
