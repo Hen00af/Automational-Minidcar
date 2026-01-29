@@ -32,7 +32,13 @@ def main():
     actuation.configure(calib)
 
     # オーケストレーターを作成
-    orchestrator = Orchestrator(sensor, perception, decision, actuation)
+    orchestrator = Orchestrator(
+        sensor,
+        perception,
+        decision,
+        actuation,
+        timing_log_path="./log/timing.log",
+    )
 
     print("[REAL MODE] Starting loop (Ctrl+C to stop)...")
     try:
