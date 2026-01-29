@@ -1,5 +1,4 @@
 # --------------------------------
-# orchestrator/orchestrator.py
 # センサー→知覚→判断→駆動のループを統合実行するオーケストレーター
 # --------------------------------
 from __future__ import annotations
@@ -21,17 +20,18 @@ class Orchestrator:
     全体をつなぐ役（レベル0単一ループ想定）。
     - 中身（アルゴリズム/ハード）を知らず、I/Fだけで接続する。
     """
+
     def __init__(
         self,
         sensor: DistanceSensorModule,
         perception: Perception,
         decision: Decision,
         actuation: Actuation,
-        timing_log_path: Optional[str] = None
+        timing_log_path: Optional[str] = None,
     ):
         """
         初期化
-        
+
         Args:
             sensor: 距離センサーモジュール
             perception: 知覚モジュール
@@ -48,109 +48,121 @@ class Orchestrator:
         self._last_loop_time: Optional[float] = None
         self._timing_logger = self._setup_timing_logger(timing_log_path)
         import time
+
         self._timing_start_time = time.time()
         if self._timing_logger:
             self._timing_logger.info("event=run_start t=%.3fs", 0.0)
-    
+
     def run_once(self) -> Telemetry:
         """
         1サイクル分の処理（例外処理や安全停止ポリシーは必要に応じて追加）。
-        
+
         Returns:
             Telemetry: 駆動モジュールの適用結果
         """
         import time
+
         loop_idx = 0
         t0 = time.perf_counter()
-        
+
         # 1. 計測 (Measure)
         t1 = time.perf_counter()
         distance_data = self.sensor.read()
         t2 = time.perf_counter()
         self._log_stage(loop_idx, "sensor", t1, t2)
-        
+
         # 2. 知覚 (Perceive)
         t3 = time.perf_counter()
         features = self.perception.analyze(distance_data)
         t4 = time.perf_counter()
         self._log_stage(loop_idx, "perception", t3, t4)
-        
+
         # 3. 判断 (Decide)
         t5 = time.perf_counter()
         command = self.decision.decide(features)
         t6 = time.perf_counter()
         self._log_stage(loop_idx, "decision", t5, t6)
-        
+
         # 4. 実行 (Act)
         t7 = time.perf_counter()
         telemetry = self.actuation.apply(command)
         t8 = time.perf_counter()
         self._log_stage(loop_idx, "actuation", t7, t8)
-        
+
         self._log_event("loop_end")
         self._log_frequency(loop_idx, t1, t7, t0)
         return telemetry
-    
-    def run_loop(self, max_iterations: Optional[int] = None, loop_interval_sec: float = orchestrator.LOOP_INTERVAL_SEC, log_interval_sec: float = orchestrator.LOG_INTERVAL_SEC) -> None:
+
+    def run_loop(
+        self,
+        max_iterations: Optional[int] = None,
+        loop_interval_sec: float = orchestrator.LOOP_INTERVAL_SEC,
+        log_interval_sec: float = orchestrator.LOG_INTERVAL_SEC,
+    ) -> None:
         """
         連続実行（第1イテレーションは単純に繰り返すだけ）。
         最新優先の高度化（古いフレーム破棄等）は次イテレーションで扱う。
-        
+
         Args:
             max_iterations: 最大実行回数（Noneの場合は無限ループ）
             loop_interval_sec: ループ間隔（秒）。デフォルトは設定ファイルの値（0.1秒（10Hz））
             log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは設定ファイルの値（1.0秒）
         """
         import time
+
         start_time = time.time()
         iteration = 0
         last_log_time = 0.0
         header_printed = False
-        
+
         try:
             while max_iterations is None or iteration < max_iterations:
                 t0 = time.perf_counter()
-                
+
                 # 1. 計測 (Measure)
                 t1 = time.perf_counter()
                 distance_data = self.sensor.read()
                 t2 = time.perf_counter()
                 self._log_stage(iteration, "sensor", t1, t2)
-                
+
                 # 2. 知覚 (Perceive)
                 t3 = time.perf_counter()
                 features = self.perception.analyze(distance_data)
                 t4 = time.perf_counter()
                 self._log_stage(iteration, "perception", t3, t4)
-                
+
                 # 3. 判断 (Decide)
                 t5 = time.perf_counter()
                 command = self.decision.decide(features)
                 t6 = time.perf_counter()
                 self._log_stage(iteration, "decision", t5, t6)
-                
+
                 # 4. 実行 (Act)
                 t7 = time.perf_counter()
                 telemetry = self.actuation.apply(command)
                 t8 = time.perf_counter()
                 self._log_stage(iteration, "actuation", t7, t8)
-                
+
                 # ヘッダーを一度だけ出力
                 if not header_printed:
-                    print("TIME  | F_DIST | L_DIST | LF_DIST | ERROR | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS")
+                    print(
+                        "TIME   | F_DIST | L_DIST | LF_DIST | ERROR | FRONT | L_WALL | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS"
+                    )
                     header_printed = True
-                
+
                 # 詳細ログ出力（一定間隔で）
                 current_time = time.time()
                 iteration += 1
                 if current_time - last_log_time >= log_interval_sec:
                     elapsed_time = current_time - start_time
-                    self._log_cycle(elapsed_time, distance_data, features, command, telemetry)
+                    self._log_cycle(
+                        elapsed_time, distance_data, features, command, telemetry
+                    )
                     last_log_time = current_time
-                
+
                 self._log_event("loop_end")
                 self._log_frequency(iteration, t1, t7, t0)
-                
+
                 if loop_interval_sec > 0:
                     time.sleep(loop_interval_sec)
         except KeyboardInterrupt:
@@ -159,63 +171,68 @@ class Orchestrator:
         except Exception as e:
             print(f"\n[Orchestrator] Error occurred: {e}")
             self.emergency_stop(f"error: {str(e)}")
-    
-    def _setup_timing_logger(self, timing_log_path: Optional[str]) -> Optional[logging.Logger]:
+
+    def _setup_timing_logger(
+        self, timing_log_path: Optional[str]
+    ) -> Optional[logging.Logger]:
         """
         タイミングロガーをセットアップ
-        
+
         Args:
             timing_log_path: ログファイルのパス（Noneの場合はログを出力しない）
-            
+
         Returns:
             設定されたロガー。timing_log_pathがNoneの場合はNone
         """
         if timing_log_path is None:
             return None
-        
+
         # ログディレクトリが存在しない場合は作成
         log_dir = os.path.dirname(timing_log_path)
         if log_dir and not os.path.exists(log_dir):
             os.makedirs(log_dir, exist_ok=True)
-        
+
         # ロガーを作成
         logger = logging.getLogger(f"{__name__}.timing")
         logger.setLevel(logging.INFO)
-        
+
         # 既存のハンドラーをクリア（重複を防ぐ）
         logger.handlers.clear()
-        
+
         # ファイルハンドラーを作成
-        file_handler = logging.FileHandler(timing_log_path, mode='w', encoding='utf-8')
+        file_handler = logging.FileHandler(timing_log_path, mode="w", encoding="utf-8")
         file_handler.setLevel(logging.INFO)
-        
+
         # フォーマッターを設定（シンプルな形式）
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter("%(message)s")
         file_handler.setFormatter(formatter)
-        
+
         logger.addHandler(file_handler)
         logger.propagate = False  # 親ロガーに伝播しない
-        
+
         return logger
 
     def _log_event(self, event: str) -> None:
         """
         イベントをログに記録
-        
+
         Args:
             event: イベント名（例: "run_start", "loop_end"）
         """
         if not self._timing_logger:
             return
-        
+
         import time
+
         elapsed_sec = time.time() - self._timing_start_time
         self._timing_logger.info("event=%s t=%.3fs", event, elapsed_sec)
 
-    def _log_stage(self, loop_idx: int, stage_name: str, start_time: float, end_time: float) -> None:
+    def _log_stage(
+        self, loop_idx: int, stage_name: str, start_time: float, end_time: float
+    ) -> None:
         """
         各ステージの処理時間をログに記録
-        
+
         Args:
             loop_idx: ループインデックス
             stage_name: ステージ名（"sensor", "perception", "decision", "actuation"）
@@ -224,22 +241,25 @@ class Orchestrator:
         """
         if not self._timing_logger:
             return
-        
+
         duration = end_time - start_time
         import time
+
         elapsed_sec = time.time() - self._timing_start_time
         self._timing_logger.info(
             "t=%.3fs loop=%d stage=%s duration=%.6fs",
             elapsed_sec,
             loop_idx,
             stage_name,
-            duration
+            duration,
         )
 
-    def _log_frequency(self, loop_idx: int, sensor_time: float, actuation_time: float, loop_time: float) -> None:
+    def _log_frequency(
+        self, loop_idx: int, sensor_time: float, actuation_time: float, loop_time: float
+    ) -> None:
         """
         センサー/駆動/ループの実測周波数（Hz）をログに記録
-        
+
         Args:
             loop_idx: ループインデックス
             sensor_time: センサー読み取り時刻
@@ -254,6 +274,7 @@ class Orchestrator:
         loop_hz = self._calculate_hz(loop_time, self._last_loop_time)
 
         import time
+
         elapsed_sec = time.time() - self._timing_start_time
         self._timing_logger.info(
             "t=%.3fs loop=%d metric=frequency sensor_hz=%s actuation_hz=%s loop_hz=%s",
@@ -269,14 +290,16 @@ class Orchestrator:
         self._last_loop_time = loop_time
 
     @staticmethod
-    def _calculate_hz(current_time: float, last_time: Optional[float]) -> Optional[float]:
+    def _calculate_hz(
+        current_time: float, last_time: Optional[float]
+    ) -> Optional[float]:
         """
         前回時刻と現在時刻から周波数（Hz）を計算
-        
+
         Args:
             current_time: 現在時刻
             last_time: 前回時刻
-            
+
         Returns:
             周波数（Hz）。初回や時刻が無効な場合はNone
         """
@@ -291,10 +314,10 @@ class Orchestrator:
     def _format_hz(value: Optional[float]) -> str:
         """
         周波数値を文字列にフォーマット
-        
+
         Args:
             value: 周波数値（Hz）
-            
+
         Returns:
             フォーマットされた文字列。Noneの場合は"NA"
         """
@@ -308,11 +331,11 @@ class Orchestrator:
         distance_data: DistanceData,
         features: WallFeatures,
         command: Command,
-        telemetry: Telemetry
+        telemetry: Telemetry,
     ) -> None:
         """
         1サイクルの詳細情報をログ出力（パイプ区切りのテーブル形式）
-        
+
         Args:
             elapsed_time: ループ開始からの経過時間（秒）
             distance_data: センサーデータ
@@ -329,31 +352,31 @@ class Orchestrator:
         steer = command.steer
         speed = command.throttle
         steer_pwm = telemetry.steer_pwm_us if telemetry.steer_pwm_us is not None else 0
-        throttle_pwm = telemetry.throttle_pwm_us if telemetry.throttle_pwm_us is not None else 0
-        status_str = telemetry.status.value if hasattr(telemetry.status, 'value') else str(telemetry.status)
-        
+        throttle_pwm = (
+            telemetry.throttle_pwm_us if telemetry.throttle_pwm_us is not None else 0
+        )
+        status_str = (
+            telemetry.status.value
+            if hasattr(telemetry.status, "value")
+            else str(telemetry.status)
+        )
+
+        # 知覚結果のフラグ
+        front_flag = "Y" if features.is_front_blocked else "N"
+        left_wall_flag = "Y" if features.is_left_wall else "N"
+
         # パイプ区切りのテーブル形式で出力
-        # TIME: 5文字幅（右寄せ）、小数点1桁 + "s"
-        # パイプ区切りのテーブル形式で出力
-        # TIME: 5文字幅（右寄せ）、小数点1桁 + "s"
-        # F_DIST: 4文字幅（右寄せ） + "mm"
-        # L_DIST: 4文字幅（右寄せ） + "mm"
-        # LF_DIST: 5文字幅（右寄せ） + "mm"
-        # ERROR: 4文字幅（右寄せ）、符号付き + "mm"
-        # STEER: 5文字幅（右寄せ）、符号付き、小数点2桁
-        # THROTTLE: 6文字幅（右寄せ）、小数点2桁 + 空白調整
-        # STEER_PWM: 9文字幅（右寄せ） + "us"
-        # THROTTLE_PWM: 11文字幅（右寄せ） + "us"
-        # STATUS: そのまま文字列
-        print(f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+4.0f}mm | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us | {status_str}")
-    
+        print(
+            f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+4.0f}mm | {front_flag:>5} | {left_wall_flag:>6} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us | {status_str}"
+        )
+
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
         """
         上位から明示停止できる入口（設計上の口）。
-        
+
         Args:
             reason: 停止理由
-            
+
         Returns:
             Telemetry: 停止処理の結果
         """
