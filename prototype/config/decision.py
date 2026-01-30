@@ -14,15 +14,15 @@ class WallFollowDecisionConfig:
     KP: Final[float] = 0.01  # P制御の比例ゲイン
     KD: Final[float] = 0.001  # D制御の微分ゲイン（デフォルトは0.001。0.0を指定すると無効）
     DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
-    BASE_SPEED: Final[float] = 0.3  # 通常走行時の基本速度 [0.0, 1.0]
+    BASE_SPEED: Final[float] = 0.28  # 通常走行時の基本速度 [0.0, 1.0]
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
     
     # 前方に壁がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.3  # 前方に壁がある場合の速度
+    FRONT_BLOCKED_SPEED: Final[float] = 0.25  # 前方に壁がある場合の速度
     FRONT_BLOCKED_STEERING: Final[float] = -1.0  # 前方に壁がある場合のステアリング（右折用、負の値、フル右折）
     
     # 左コーナー時の設定
-    CORNER_LEFT_SPEED: Final[float] = 0.3  # 左コーナー時の速度
+    CORNER_LEFT_SPEED: Final[float] = 0.25  # 左コーナー時の速度
     CORNER_LEFT_STEERING: Final[float] = 0.8  # 左コーナー時のステアリング（左折用、正の値）
 
 

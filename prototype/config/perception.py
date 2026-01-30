@@ -14,10 +14,10 @@ class WallPositionPerceptionConfig:
 
     TARGET_DISTANCE_MM: Final[float] = 500.0  # 左壁との目標距離（mm）
     FRONT_BLOCKED_THRESHOLD_MM: Final[float] = (
-        1000.0  # 前方が壁と判定する距離の閾値（mm）
+        2000.0  # 前方が壁と判定する距離の閾値（mm）
     )
     LEFT_WALL_THRESHOLD_MM: Final[float] = (
-        1000.0  # 左側に壁がないと判定する距離の閾値（mm）
+        2000.0  # 左側に壁がないと判定する距離の閾値（mm）
     )
 
 
