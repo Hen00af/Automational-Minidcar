@@ -20,7 +20,7 @@ class OrchestratorConfig:
     # - 推奨範囲: 0.05-0.1秒（50-100ms）- センサー応答と処理時間を考慮
     # - 現在の設定: 0.1秒（100ms）- 安全マージンあり
     LOOP_INTERVAL_SEC: Final[float] = 0.1
-    LOG_INTERVAL_SEC: Final[float] = 0.2  # 詳細ログ出力間隔（秒）。デフォルトは1.0秒
+    LOG_INTERVAL_SEC: Final[float] = 0.1  # 詳細ログ出力間隔（秒）。デフォルトは1.0秒
 
 
 # シングルトンインスタンス
