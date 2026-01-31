@@ -19,11 +19,13 @@ class WallFollowDecisionConfig:
     
     # 前方に壁がある場合の設定
     FRONT_BLOCKED_SPEED: Final[float] = 0.25  # 前方に壁がある場合の速度
-    FRONT_BLOCKED_STEERING: Final[float] = -1.0  # 前方に壁がある場合のステアリング（右折用、負の値、フル右折）
-    
+    FRONT_STEER_GAIN: Final[float] = 0.0005  # 前方壁回避の比例ゲイン Kf (steer = clamp(-Kf*(F_th - F), -1, 0))
+    FRONT_THRESHOLD_MM: Final[float] = 2000.0  # 前方壁回避が始まる距離閾値 (mm)
+
     # 左コーナー時の設定
     CORNER_LEFT_SPEED: Final[float] = 0.25  # 左コーナー時の速度
-    CORNER_LEFT_STEERING: Final[float] = 0.8  # 左コーナー時のステアリング（左折用、正の値）
+    CORNER_LEFT_STEER_GAIN: Final[float] = 0.0004  # 左コーナーの比例ゲイン Kc (steer = clamp(Kc*(LF - LF_th), 0, 1))
+    CORNER_LEFT_THRESHOLD_MM: Final[float] = 2000.0  # 左コーナー判定の距離閾値 (mm)
 
 
 @dataclass(frozen=True)

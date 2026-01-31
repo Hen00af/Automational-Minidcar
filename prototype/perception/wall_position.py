@@ -62,4 +62,6 @@ class WallPositionPerception:
             error_from_target=error,
             is_front_blocked=front_blocked,
             is_left_wall=is_left_wall,
+            front_distance_mm=data.front_mm,
+            left_front_distance_mm=data.left_front_mm,
         )

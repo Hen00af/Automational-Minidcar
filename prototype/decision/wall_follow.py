@@ -28,31 +28,21 @@ class WallFollowDecision:
         base_speed: float = decision.wall_follow.BASE_SPEED,
         max_steering: float = decision.wall_follow.MAX_STEERING,
         front_blocked_speed: float = decision.wall_follow.FRONT_BLOCKED_SPEED,
-        front_blocked_steering: float = decision.wall_follow.FRONT_BLOCKED_STEERING,
+        front_steer_gain: float = decision.wall_follow.FRONT_STEER_GAIN,
+        front_threshold_mm: float = decision.wall_follow.FRONT_THRESHOLD_MM,
         corner_left_speed: float = decision.wall_follow.CORNER_LEFT_SPEED,
-        corner_left_steering: float = decision.wall_follow.CORNER_LEFT_STEERING,
+        corner_left_steer_gain: float = decision.wall_follow.CORNER_LEFT_STEER_GAIN,
+        corner_left_threshold_mm: float = decision.wall_follow.CORNER_LEFT_THRESHOLD_MM,
     ):
-        """
-        初期化
-
-        Args:
-            kp: P制御の比例ゲイン。デフォルトは設定ファイルの値
-            kd: D制御の微分ゲイン。デフォルトは設定ファイルの値（0.0で無効）
-            differential_smoothing_factor: 微分値の平滑化係数 [0.0, 1.0]。デフォルトは設定ファイルの値
-            base_speed: 通常走行時の基本速度 [0.0, 1.0]。デフォルトは設定ファイルの値
-            max_steering: ステアリングの最大値（絶対値）。デフォルトは設定ファイルの値
-            front_blocked_speed: 前方に壁がある場合の速度。デフォルトは設定ファイルの値
-            front_blocked_steering: 前方に壁がある場合のステアリング（右折用、負の値）。デフォルトは設定ファイルの値
-            corner_left_speed: 左コーナー時の速度。デフォルトは設定ファイルの値
-            corner_left_steering: 左コーナー時のステアリング（左折用、正の値）。デフォルトは設定ファイルの値
-        """
         self.kp = kp
         self.base_speed = base_speed
         self.max_steering = max_steering
         self.front_blocked_speed = front_blocked_speed
-        self.front_blocked_steering = front_blocked_steering
+        self.front_steer_gain = front_steer_gain
+        self.front_threshold_mm = front_threshold_mm
         self.corner_left_speed = corner_left_speed
-        self.corner_left_steering = corner_left_steering
+        self.corner_left_steer_gain = corner_left_steer_gain
+        self.corner_left_threshold_mm = corner_left_threshold_mm
 
         # D制御器を初期化
         self._differential_controller = DifferentialController(
@@ -75,23 +65,33 @@ class WallFollowDecision:
         current_time = time.time()
         self._frame_id += 1
 
-        # 1. 左コーナー（左に壁がない）の場合：左折
+        # 1. 左コーナー（左に壁がない）の場合：左折（比例制御）
+        #    steer = clamp(Kc * (left_front - threshold), 0, 1)
         if not features.is_left_wall:
+            steer = self.corner_left_steer_gain * (
+                features.left_front_distance_mm - self.corner_left_threshold_mm
+            )
+            steer = max(0.0, min(steer, 1.0))
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
-                steer=self.corner_left_steering,  # 左に曲がる（正の値）
+                steer=steer,
                 throttle=self.corner_left_speed,
                 mode=DriveMode.SLOW,
                 reason="corner_left",
             )
 
-        # 2. 前方に壁がある場合：停止または右折
+        # 2. 前方に壁がある場合：右折（比例制御）
+        #    steer = clamp(-Kf * (threshold - front), -1, 0)
         if features.is_front_blocked:
+            steer = -self.front_steer_gain * (
+                self.front_threshold_mm - features.front_distance_mm
+            )
+            steer = max(-1.0, min(steer, 0.0))
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
-                steer=self.front_blocked_steering,  # 右に曲がる（負の値）
+                steer=steer,
                 throttle=self.front_blocked_speed,
                 mode=DriveMode.STOP
                 if self.front_blocked_speed == 0.0
