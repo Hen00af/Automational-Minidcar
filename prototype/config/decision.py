@@ -25,6 +25,12 @@ class WallFollowDecisionConfig:
     CORNER_LEFT_SPEED: Final[float] = 0.30 # 左コーナー時の速度
     CORNER_LEFT_STEERING: Final[float] = 0.8  # 左コーナー時のステアリング（左折用、正の値）
 
+    # カーブ減速の設定
+    SPEED_REDUCTION_FACTOR: Final[float] = 0.5  # ステアリング角に応じた減速係数 [0.0, 1.0]。0.0で減速なし、1.0でフル操舵時に速度0
+
+    # ステアリングレートリミッターの設定
+    MAX_STEERING_RATE: Final[float] = 15.0  # 1秒あたりのステアリング最大変化量。0.0で無制限
+
 
 @dataclass(frozen=True)
 class DecisionConfig:

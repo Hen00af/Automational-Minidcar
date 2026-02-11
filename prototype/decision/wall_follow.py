@@ -31,6 +31,8 @@ class WallFollowDecision:
         front_blocked_steering: float = decision.wall_follow.FRONT_BLOCKED_STEERING,
         corner_left_speed: float = decision.wall_follow.CORNER_LEFT_SPEED,
         corner_left_steering: float = decision.wall_follow.CORNER_LEFT_STEERING,
+        speed_reduction_factor: float = decision.wall_follow.SPEED_REDUCTION_FACTOR,
+        max_steering_rate: float = decision.wall_follow.MAX_STEERING_RATE,
     ):
         """
         初期化
@@ -45,6 +47,8 @@ class WallFollowDecision:
             front_blocked_steering: 前方に壁がある場合のステアリング（右折用、負の値）。デフォルトは設定ファイルの値
             corner_left_speed: 左コーナー時の速度。デフォルトは設定ファイルの値
             corner_left_steering: 左コーナー時のステアリング（左折用、正の値）。デフォルトは設定ファイルの値
+            speed_reduction_factor: ステアリング角に応じた減速係数 [0.0, 1.0]。デフォルトは設定ファイルの値
+            max_steering_rate: 1秒あたりのステアリング最大変化量。0.0で無制限。デフォルトは設定ファイルの値
         """
         self.kp = kp
         self.base_speed = base_speed
@@ -53,6 +57,8 @@ class WallFollowDecision:
         self.front_blocked_steering = front_blocked_steering
         self.corner_left_speed = corner_left_speed
         self.corner_left_steering = corner_left_steering
+        self.speed_reduction_factor = speed_reduction_factor
+        self.max_steering_rate = max_steering_rate
 
         # D制御器を初期化
         self._differential_controller = DifferentialController(
@@ -61,6 +67,10 @@ class WallFollowDecision:
 
         # frame_idカウンター
         self._frame_id = 0
+
+        # レートリミッター用の前回値
+        self._prev_steer: float = 0.0
+        self._prev_steer_time: float | None = None
 
     def decide(self, features: WallFeatures) -> Command:
         """
@@ -77,24 +87,32 @@ class WallFollowDecision:
 
         # 1. 左コーナー（左に壁がない）の場合：左折
         if not features.is_left_wall:
+            steer = self._apply_rate_limit(self.corner_left_steering, current_time)
+            throttle = self._apply_curve_deceleration(
+                self.corner_left_speed, steer
+            )
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
-                steer=self.corner_left_steering,  # 左に曲がる（正の値）
-                throttle=self.corner_left_speed,
+                steer=steer,
+                throttle=throttle,
                 mode=DriveMode.SLOW,
                 reason="corner_left",
             )
 
         # 2. 前方に壁がある場合：停止または右折
         if features.is_front_blocked:
+            steer = self._apply_rate_limit(self.front_blocked_steering, current_time)
+            throttle = self._apply_curve_deceleration(
+                self.front_blocked_speed, steer
+            )
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
-                steer=self.front_blocked_steering,  # 右に曲がる（負の値）
-                throttle=self.front_blocked_speed,
+                steer=steer,
+                throttle=throttle,
                 mode=DriveMode.STOP
-                if self.front_blocked_speed == 0.0
+                if throttle == 0.0
                 else DriveMode.SLOW,
                 reason="front_blocked",
             )
@@ -116,11 +134,60 @@ class WallFollowDecision:
         # ステアリングを -1.0 〜 1.0 の範囲にクランプ
         steering = max(min(steering, self.max_steering), -self.max_steering)
 
+        steering = self._apply_rate_limit(steering, current_time)
+        throttle = self._apply_curve_deceleration(self.base_speed, steering)
+
         return Command(
             frame_id=self._frame_id,
             t_capture_sec=current_time,
             steer=steering,
-            throttle=self.base_speed,
+            throttle=throttle,
             mode=DriveMode.RUN,
             reason="wall_follow",
         )
+
+    def _apply_rate_limit(self, target_steer: float, current_time: float) -> float:
+        """
+        ステアリングの変化量を制限する（レートリミッター）。
+
+        1フレームあたりの変化量を max_steering_rate * dt 以内に抑える。
+
+        Args:
+            target_steer: 目標ステアリング値 [-1.0, 1.0]
+            current_time: 現在時刻（秒）
+
+        Returns:
+            レートリミット適用後のステアリング値
+        """
+        if self.max_steering_rate <= 0.0 or self._prev_steer_time is None:
+            self._prev_steer = target_steer
+            self._prev_steer_time = current_time
+            return target_steer
+
+        dt = current_time - self._prev_steer_time
+        if dt <= 0.0:
+            return self._prev_steer
+
+        max_delta = self.max_steering_rate * dt
+        delta = target_steer - self._prev_steer
+        delta = max(min(delta, max_delta), -max_delta)
+
+        result = self._prev_steer + delta
+        self._prev_steer = result
+        self._prev_steer_time = current_time
+        return result
+
+    def _apply_curve_deceleration(self, base_speed: float, steering: float) -> float:
+        """
+        ステアリング角に応じて速度を減速する。
+
+        speed = base_speed * (1.0 - speed_reduction_factor * |steering|)
+
+        Args:
+            base_speed: 減速前の基本速度
+            steering: ステアリング値 [-1.0, 1.0]
+
+        Returns:
+            減速後の速度 [0.0, base_speed]
+        """
+        return base_speed * (1.0 - self.speed_reduction_factor * abs(steering))
