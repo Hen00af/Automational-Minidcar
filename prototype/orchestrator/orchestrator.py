@@ -170,7 +170,10 @@ class Orchestrator:
                 self._log_event("loop_end")
                 self._log_frequency(iteration, t1, t7, t0)
 
-                time.sleep(orchestrator.LOOP_INTERVAL_SEC)
+                elapsed = time.perf_counter() - t0
+                remaining = orchestrator.LOOP_INTERVAL_SEC - elapsed
+                if remaining > 0:
+                    time.sleep(remaining)
         except KeyboardInterrupt:
             print("\n[Orchestrator] Interrupted by user")
             self.emergency_stop("user_interrupt")
