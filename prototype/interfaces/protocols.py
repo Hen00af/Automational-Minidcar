@@ -29,6 +29,18 @@ class DistanceSensorModule(Protocol):
         """3方向の距離を計測して返す"""
         ...
 
+    def poll(self) -> tuple[bool, DistanceData]:
+        """data-readyなセンサーを読み出し、更新有無とデータを返す"""
+        ...
+
+    def start_continuous(self) -> None:
+        """連続計測モードを開始"""
+        ...
+
+    def stop_continuous(self) -> None:
+        """連続計測モードを停止"""
+        ...
+
 
 class Perception(Protocol):
     """

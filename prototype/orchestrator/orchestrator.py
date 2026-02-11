@@ -96,17 +96,18 @@ class Orchestrator:
     def run_loop(
         self,
         max_iterations: Optional[int] = None,
-        loop_interval_sec: float = orchestrator.LOOP_INTERVAL_SEC,
+        poll_interval_sec: float = orchestrator.POLL_INTERVAL_SEC,
         log_interval_sec: float = orchestrator.LOG_INTERVAL_SEC,
     ) -> None:
         """
-        連続実行（第1イテレーションは単純に繰り返すだけ）。
-        最新優先の高度化（古いフレーム破棄等）は次イテレーションで扱う。
+        ポーリングベースの連続実行。
+        sensor.poll() で data-ready なセンサーのみ読み出し、
+        更新があったときだけ perception→decision→actuation を実行する。
 
         Args:
             max_iterations: 最大実行回数（Noneの場合は無限ループ）
-            loop_interval_sec: ループ間隔（秒）。デフォルトは設定ファイルの値（0.1秒（10Hz））
-            log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは設定ファイルの値（1.0秒）
+            poll_interval_sec: ポーリング間隔（秒）。デフォルトは設定ファイルの値（1ms）
+            log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは設定ファイルの値
         """
         import time
 
@@ -119,10 +120,16 @@ class Orchestrator:
             while max_iterations is None or iteration < max_iterations:
                 t0 = time.perf_counter()
 
-                # 1. 計測 (Measure)
+                # 1. ポーリング (Poll)
                 t1 = time.perf_counter()
-                distance_data = self.sensor.read()
+                updated, distance_data = self.sensor.poll()
                 t2 = time.perf_counter()
+
+                # 更新なしならスキップして次のポーリングへ
+                if not updated:
+                    time.sleep(poll_interval_sec)
+                    continue
+
                 self._log_stage(iteration, "sensor", t1, t2)
 
                 # 2. 知覚 (Perceive)
@@ -150,24 +157,21 @@ class Orchestrator:
                     )
                     header_printed = True
 
-                # 詳細ログ出力（一定間隔で）
+                # 詳細ログ出力（毎ループ）
                 current_time = time.time()
                 iteration += 1
-                if current_time - last_log_time >= log_interval_sec:
-                    elapsed_time = current_time - start_time
-                    self._log_cycle(
-                        elapsed_time, distance_data, features, command, telemetry
-                    )
-                    last_log_time = current_time
+                elapsed_time = current_time - start_time
+                self._log_cycle(
+                    elapsed_time, distance_data, features, command, telemetry
+                )
 
                 self._log_event("loop_end")
                 self._log_frequency(iteration, t1, t7, t0)
 
-                if loop_interval_sec > 0:
-                    elapsed = time.perf_counter() - t0
-                    sleep_time = loop_interval_sec - elapsed
-                    if sleep_time > 0:
-                        time.sleep(sleep_time)
+                elapsed = time.perf_counter() - t0
+                remaining = orchestrator.LOOP_INTERVAL_SEC - elapsed
+                if remaining > 0:
+                    time.sleep(remaining)
         except KeyboardInterrupt:
             print("\n[Orchestrator] Interrupted by user")
             self.emergency_stop("user_interrupt")
@@ -370,7 +374,7 @@ class Orchestrator:
 
         # パイプ区切りのテーブル形式で出力
         print(
-            f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+5.0f}mm | {front_flag:>5} | {left_wall_flag:>6} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
+            f"{timestamp:>6.2f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+5.0f}mm | {front_flag:>5} | {left_wall_flag:>6} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
         )
 
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
