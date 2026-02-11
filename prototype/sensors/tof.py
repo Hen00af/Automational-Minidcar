@@ -19,6 +19,9 @@ import busio
 import digitalio
 import adafruit_vl53l0x
 
+# 範囲外を示すデフォルト値（mm）
+_OUT_OF_RANGE: int = 8190
+
 
 @dataclass
 class TOFReadings:
@@ -52,6 +55,9 @@ class TOFSensor:
         self._sensors: list[adafruit_vl53l0x.VL53L0X] = []
         self._xshut_controls: list[digitalio.DigitalInOut] = []
         self._is_initialized = False
+        self._last_readings = TOFReadings(
+            front=_OUT_OF_RANGE, left=_OUT_OF_RANGE, left_front=_OUT_OF_RANGE
+        )
     
     def _initialize_hardware(self) -> None:
         """ハードウェアを初期化"""
@@ -91,6 +97,7 @@ class TOFSensor:
                 print(f"[TOF] センサー {i} ({sensor_name}) をアドレス {hex(new_address)} で初期化しました", file=sys.stderr)
             
             self._is_initialized = True
+            self.start_continuous()
         except Exception as e:
             raise RuntimeError(f"Failed to initialize TOF sensors: {e}") from e
     
@@ -149,9 +156,50 @@ class TOFSensor:
             self._initialize_hardware()
         return self._sensors[2].range
     
+    def start_continuous(self) -> None:
+        """全センサーを連続計測モードに切り替える"""
+        if not self._is_initialized:
+            self._initialize_hardware()
+            return  # _initialize_hardware 内で start_continuous が呼ばれる
+        for sensor in self._sensors:
+            sensor.start_continuous()
+        print("[TOF] 連続計測モードを開始しました", file=sys.stderr)
+
+    def stop_continuous(self) -> None:
+        """全センサーの連続計測モードを停止する"""
+        for sensor in self._sensors:
+            sensor.stop_continuous()
+        print("[TOF] 連続計測モードを停止しました", file=sys.stderr)
+
+    def poll(self) -> tuple[bool, DistanceData]:
+        """
+        data-readyなセンサーのみ読み出し、更新有無と最新のDistanceDataを返す。
+        readyでないセンサーは前回値を保持する。
+
+        Returns:
+            (updated, distance_data): 1台でも更新があればupdated=True
+        """
+        if not self._is_initialized:
+            self._initialize_hardware()
+
+        updated = False
+        # front=0, left=1, left_front=2
+        if self._sensors[0].data_ready:
+            self._last_readings.front = self._sensors[0].range
+            updated = True
+        if self._sensors[1].data_ready:
+            self._last_readings.left = self._sensors[1].range
+            updated = True
+        if self._sensors[2].data_ready:
+            self._last_readings.left_front = self._sensors[2].range
+            updated = True
+
+        return updated, DistanceData.from_tof_readings(self._last_readings)
+
     def close(self) -> None:
         """リソースを解放"""
-        # 必要に応じてクリーンアップ処理を追加
+        if self._is_initialized:
+            self.stop_continuous()
         self._sensors.clear()
         self._xshut_controls.clear()
         self._is_initialized = False

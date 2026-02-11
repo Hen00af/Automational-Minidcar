@@ -96,17 +96,18 @@ class Orchestrator:
     def run_loop(
         self,
         max_iterations: Optional[int] = None,
-        loop_interval_sec: float = orchestrator.LOOP_INTERVAL_SEC,
+        poll_interval_sec: float = orchestrator.POLL_INTERVAL_SEC,
         log_interval_sec: float = orchestrator.LOG_INTERVAL_SEC,
     ) -> None:
         """
-        連続実行（第1イテレーションは単純に繰り返すだけ）。
-        最新優先の高度化（古いフレーム破棄等）は次イテレーションで扱う。
+        ポーリングベースの連続実行。
+        sensor.poll() で data-ready なセンサーのみ読み出し、
+        更新があったときだけ perception→decision→actuation を実行する。
 
         Args:
             max_iterations: 最大実行回数（Noneの場合は無限ループ）
-            loop_interval_sec: ループ間隔（秒）。デフォルトは設定ファイルの値（0.1秒（10Hz））
-            log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは設定ファイルの値（1.0秒）
+            poll_interval_sec: ポーリング間隔（秒）。デフォルトは設定ファイルの値（1ms）
+            log_interval_sec: 詳細ログ出力間隔（秒）。デフォルトは設定ファイルの値
         """
         import time
 
@@ -119,11 +120,16 @@ class Orchestrator:
             while max_iterations is None or iteration < max_iterations:
                 t0 = time.perf_counter()
 
-                # 1. 計測 (Measure)
+                # 1. ポーリング (Poll)
                 t1 = time.perf_counter()
-                distance_data = self.sensor.read()
+                updated, distance_data = self.sensor.poll()
                 t2 = time.perf_counter()
                 self._log_stage(iteration, "sensor", t1, t2)
+
+                # 更新なしならスキップして次のポーリングへ
+                if not updated:
+                    time.sleep(poll_interval_sec)
+                    continue
 
                 # 2. 知覚 (Perceive)
                 t3 = time.perf_counter()
@@ -163,11 +169,7 @@ class Orchestrator:
                 self._log_event("loop_end")
                 self._log_frequency(iteration, t1, t7, t0)
 
-                if loop_interval_sec > 0:
-                    elapsed = time.perf_counter() - t0
-                    sleep_time = loop_interval_sec - elapsed
-                    if sleep_time > 0:
-                        time.sleep(sleep_time)
+                time.sleep(poll_interval_sec)
         except KeyboardInterrupt:
             print("\n[Orchestrator] Interrupted by user")
             self.emergency_stop("user_interrupt")

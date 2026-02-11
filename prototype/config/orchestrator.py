@@ -21,6 +21,7 @@ class OrchestratorConfig:
     # - 現在の設定: 0.1秒（100ms）- 安全マージンあり
     LOOP_INTERVAL_SEC: Final[float] = 0.1
     LOG_INTERVAL_SEC: Final[float] = 0.1  # 詳細ログ出力間隔（秒）。デフォルトは1.0秒
+    POLL_INTERVAL_SEC: Final[float] = 0.001  # ポーリング間隔（秒）。デフォルトは1ms
 
 
 # シングルトンインスタンス
