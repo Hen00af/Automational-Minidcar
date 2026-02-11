@@ -157,15 +157,13 @@ class Orchestrator:
                     )
                     header_printed = True
 
-                # 詳細ログ出力（一定間隔で）
+                # 詳細ログ出力（毎ループ）
                 current_time = time.time()
                 iteration += 1
-                if current_time - last_log_time >= log_interval_sec:
-                    elapsed_time = current_time - start_time
-                    self._log_cycle(
-                        elapsed_time, distance_data, features, command, telemetry
-                    )
-                    last_log_time = current_time
+                elapsed_time = current_time - start_time
+                self._log_cycle(
+                    elapsed_time, distance_data, features, command, telemetry
+                )
 
                 self._log_event("loop_end")
                 self._log_frequency(iteration, t1, t7, t0)
