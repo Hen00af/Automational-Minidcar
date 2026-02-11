@@ -376,7 +376,7 @@ class Orchestrator:
 
         # パイプ区切りのテーブル形式で出力
         print(
-            f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+5.0f}mm | {front_flag:>5} | {left_wall_flag:>6} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
+            f"{timestamp:>6.2f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+5.0f}mm | {front_flag:>5} | {left_wall_flag:>6} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
         )
 
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
