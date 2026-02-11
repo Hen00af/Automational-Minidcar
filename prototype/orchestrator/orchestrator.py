@@ -124,12 +124,13 @@ class Orchestrator:
                 t1 = time.perf_counter()
                 updated, distance_data = self.sensor.poll()
                 t2 = time.perf_counter()
-                self._log_stage(iteration, "sensor", t1, t2)
 
                 # 更新なしならスキップして次のポーリングへ
                 if not updated:
                     time.sleep(poll_interval_sec)
                     continue
+
+                self._log_stage(iteration, "sensor", t1, t2)
 
                 # 2. 知覚 (Perceive)
                 t3 = time.perf_counter()
@@ -169,7 +170,7 @@ class Orchestrator:
                 self._log_event("loop_end")
                 self._log_frequency(iteration, t1, t7, t0)
 
-                time.sleep(poll_interval_sec)
+                time.sleep(orchestrator.LOOP_INTERVAL_SEC)
         except KeyboardInterrupt:
             print("\n[Orchestrator] Interrupted by user")
             self.emergency_stop("user_interrupt")
