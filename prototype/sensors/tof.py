@@ -56,7 +56,7 @@ class TOFSensor:
         self._xshut_controls: list[digitalio.DigitalInOut] = []
         self._is_initialized = False
         self._last_readings = TOFReadings(
-            front=_OUT_OF_RANGE, left=_OUT_OF_RANGE, left_front=_OUT_OF_RANGE
+            front=_OUT_OF_RANGE, right_front=_OUT_OF_RANGE, left_front=_OUT_OF_RANGE
         )
     
     def _initialize_hardware(self) -> None:
@@ -183,12 +183,12 @@ class TOFSensor:
             self._initialize_hardware()
 
         updated = False
-        # front=0, left=1, left_front=2
+        # front=0, right_front=1, left_front=2
         if self._sensors[0].data_ready:
             self._last_readings.front = self._sensors[0].range
             updated = True
         if self._sensors[1].data_ready:
-            self._last_readings.left = self._sensors[1].range
+            self._last_readings.right_front = self._sensors[1].range
             updated = True
         if self._sensors[2].data_ready:
             self._last_readings.left_front = self._sensors[2].range
