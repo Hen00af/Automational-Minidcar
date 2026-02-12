@@ -1,7 +1,7 @@
 # --------------------------------
 # sensors/tof.py
 # TOFセンサー（VL53L0X）を読み取る実装
-# 左前、左、前の3つのセンサーをサポート
+# 前、右斜め前、左斜め前の3つのセンサーをサポート
 # --------------------------------
 from __future__ import annotations
 
@@ -26,15 +26,15 @@ _OUT_OF_RANGE: int = 8190
 @dataclass
 class TOFReadings:
     """TOFセンサーの読み取り値"""
-    front: int  # 前の距離（mm）
-    left: int   # 左の距離（mm）
-    left_front: int  # 左前の距離（mm）
+    front: int        # 前方の距離（mm）
+    right_front: int  # 右斜め前の距離（mm）
+    left_front: int   # 左斜め前の距離（mm）
 
 
 class TOFSensor:
     """
     TOFセンサー（VL53L0X）を読み取るクラス
-    左前、左、前の3つのセンサーをサポート
+    前、右斜め前、左斜め前の3つのセンサーをサポート
     """
     
     def __init__(
@@ -46,8 +46,8 @@ class TOFSensor:
         初期化
         
         Args:
-            xshut_pins: XSHUTピンのGPIO番号（前、左、左前の順）。デフォルトは設定ファイルの値
-            i2c_addresses: I2Cアドレス（前、左、左前の順）。デフォルトは設定ファイルの値
+            xshut_pins: XSHUTピンのGPIO番号（前、右斜め前、左斜め前の順）。デフォルトは設定ファイルの値
+            i2c_addresses: I2Cアドレス（前、右斜め前、左斜め前の順）。デフォルトは設定ファイルの値
         """
         self.xshut_pins = xshut_pins
         self.i2c_addresses = i2c_addresses
@@ -56,7 +56,7 @@ class TOFSensor:
         self._xshut_controls: list[digitalio.DigitalInOut] = []
         self._is_initialized = False
         self._last_readings = TOFReadings(
-            front=_OUT_OF_RANGE, left=_OUT_OF_RANGE, left_front=_OUT_OF_RANGE
+            front=_OUT_OF_RANGE, right_front=_OUT_OF_RANGE, left_front=_OUT_OF_RANGE
         )
     
     def _initialize_hardware(self) -> None:
@@ -106,7 +106,7 @@ class TOFSensor:
         3つのTOFセンサーから距離を読み取る（TOFReadings形式）
         
         Returns:
-            TOFReadings: 前、左、左前の距離（mm）
+            TOFReadings: 前、右斜め前、左斜め前の距離（mm）
         """
         if not self._is_initialized:
             self._initialize_hardware()
@@ -116,14 +116,14 @@ class TOFSensor:
         if len(self._sensors) != expected_count:
             raise RuntimeError(f"Expected {expected_count} sensors, but {len(self._sensors)} sensors are initialized")
         
-        # 前、左、左前の順でループして読み取り
+        # 前、右斜め前、左斜め前の順でループして読み取り
         readings_list = []
         for sensor in self._sensors:
             readings_list.append(sensor.range)
         
-        # TOFReadings形式に変換（現在は3つのセンサーを想定）
+        # TOFReadings形式に変換（3つのセンサーを想定）
         if len(readings_list) >= 3:
-            return TOFReadings(front=readings_list[0], left=readings_list[1], left_front=readings_list[2])
+            return TOFReadings(front=readings_list[0], right_front=readings_list[1], left_front=readings_list[2])
         else:
             raise RuntimeError(f"Expected at least 3 sensor readings, but got {len(readings_list)}")
     
@@ -133,25 +133,25 @@ class TOFSensor:
         DistanceSensorModuleプロトコルに適合
         
         Returns:
-            DistanceData: 前、左、左前の距離データ（タイムスタンプ付き）
+            DistanceData: 前、右斜め前、左斜め前の距離データ（タイムスタンプ付き）
         """
         readings = self.read_tof_readings()
         return DistanceData.from_tof_readings(readings)
     
     def read_front(self) -> int:
-        """前のセンサーから距離を読み取る（mm）"""
+        """前方のセンサーから距離を読み取る（mm）"""
         if not self._is_initialized:
             self._initialize_hardware()
         return self._sensors[0].range
     
-    def read_left(self) -> int:
-        """左のセンサーから距離を読み取る（mm）"""
+    def read_right_front(self) -> int:
+        """右斜め前のセンサーから距離を読み取る（mm）"""
         if not self._is_initialized:
             self._initialize_hardware()
         return self._sensors[1].range
     
     def read_left_front(self) -> int:
-        """左前のセンサーから距離を読み取る（mm）"""
+        """左斜め前のセンサーから距離を読み取る（mm）"""
         if not self._is_initialized:
             self._initialize_hardware()
         return self._sensors[2].range
@@ -183,12 +183,12 @@ class TOFSensor:
             self._initialize_hardware()
 
         updated = False
-        # front=0, left=1, left_front=2
+        # front=0, right_front=1, left_front=2
         if self._sensors[0].data_ready:
             self._last_readings.front = self._sensors[0].range
             updated = True
         if self._sensors[1].data_ready:
-            self._last_readings.left = self._sensors[1].range
+            self._last_readings.right_front = self._sensors[1].range
             updated = True
         if self._sensors[2].data_ready:
             self._last_readings.left_front = self._sensors[2].range

@@ -153,7 +153,7 @@ class Orchestrator:
                 # ヘッダーを一度だけ出力
                 if not header_printed:
                     print(
-                        "TIME   | F_DIST | L_DIST | LF_DIST | ERROR   | FRONT | L_WALL | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS"
+                        "TIME   | F_DIST | RF_DIST | LF_DIST | LR_ERR  | FRONT | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS"
                     )
                     header_printed = True
 
@@ -353,9 +353,9 @@ class Orchestrator:
         # データ取得
         timestamp = elapsed_time
         f_dist = distance_data.front_mm
-        l_dist = distance_data.left_mm
+        rf_dist = distance_data.right_front_mm
         lf_dist = distance_data.left_front_mm
-        error = features.error_from_target
+        lr_error = features.left_right_error
         steer = command.steer
         speed = command.throttle
         steer_pwm = telemetry.steer_pwm_us if telemetry.steer_pwm_us is not None else 0
@@ -370,11 +370,10 @@ class Orchestrator:
 
         # 知覚結果のフラグ
         front_flag = "Y" if features.is_front_blocked else "N"
-        left_wall_flag = "Y" if features.is_left_wall else "N"
 
         # パイプ区切りのテーブル形式で出力
         print(
-            f"{timestamp:>6.2f}s | {f_dist:>4.0f}mm | {l_dist:>4.0f}mm | {lf_dist:>5.0f}mm | {error:>+5.0f}mm | {front_flag:>5} | {left_wall_flag:>6} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
+            f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {rf_dist:>5.0f}mm | {lf_dist:>5.0f}mm | {lr_error:>+6.0f}mm | {front_flag:>5} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
         )
 
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:

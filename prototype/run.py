@@ -5,8 +5,8 @@
 
 from prototype.orchestrator import Orchestrator
 from prototype.sensors import TOFSensor
-from prototype.perception import WallPositionPerception
-from prototype.decision import WallFollowDecision
+from prototype.perception import CorridorPerception
+from prototype.decision import CorridorDecision
 from prototype.actuation import PWMActuation
 from prototype.domain.actuation import ActuationCalibration
 from prototype.config import hardware
@@ -17,8 +17,8 @@ def main():
 
     # 実機実装を使用
     sensor = TOFSensor()
-    perception = WallPositionPerception()  # 設定ファイルからデフォルト値を読み込む
-    decision = WallFollowDecision()  # 設定ファイルからデフォルト値を読み込む
+    perception = CorridorPerception()  # 設定ファイルからデフォルト値を読み込む
+    decision = CorridorDecision()  # 設定ファイルからデフォルト値を読み込む
     actuation = PWMActuation()
 
     # キャリブレーションを設定（設定ファイルから値を読み込む）
