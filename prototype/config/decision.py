@@ -20,17 +20,19 @@ class WallFollowDecisionConfig:
     BASE_SPEED: Final[float] = 0.30  # 通常走行時の基本速度 [0.0, 1.0]
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
 
+    # 前方壁との距離によるステアリング比例制御（右折・左折共通）
+    STEER_NEAR_DISTANCE_MM: Final[float] = 500.0  # 近距離閾値（mm）：この距離以下でステアリング最大
+    STEER_FAR_DISTANCE_MM: Final[float] = 1200.0  # 遠距離閾値（mm）：この距離以上でステアリング最小
+
     # 前方に壁がある場合の設定
     FRONT_BLOCKED_SPEED: Final[float] = 0.30  # 前方に壁がある場合の速度
-    FRONT_BLOCKED_STEERING: Final[
-        float
-    ] = -1.0  # 前方に壁がある場合のステアリング（右折用、負の値、フル右折）
+    FRONT_BLOCKED_NEAR_STEERING: Final[float] = -1.0  # 近距離時のステアリング（強く右折）
+    FRONT_BLOCKED_FAR_STEERING: Final[float] = -0.8  # 遠距離時のステアリング（緩く右折）
 
     # 左コーナー時の設定
     CORNER_LEFT_SPEED: Final[float] = 0.30  # 左コーナー時の速度
-    CORNER_LEFT_STEERING: Final[float] = (
-        0.8  # 左コーナー時のステアリング（左折用、正の値）
-    )
+    CORNER_LEFT_NEAR_STEERING: Final[float] = 1.0  # 近距離時のステアリング（強く左折）
+    CORNER_LEFT_FAR_STEERING: Final[float] = 0.8  # 遠距離時のステアリング（緩く左折）
 
     # カーブ減速の設定
     SPEED_REDUCTION_FACTOR: Final[float] = (
