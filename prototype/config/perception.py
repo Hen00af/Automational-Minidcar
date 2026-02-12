@@ -9,15 +9,17 @@ from typing import Final
 
 
 @dataclass(frozen=True)
-class WallPositionPerceptionConfig:
-    """壁位置知覚モジュール設定"""
+class CorridorPerceptionConfig:
+    """回廊走行知覚モジュール設定"""
 
-    TARGET_DISTANCE_MM: Final[float] = 500.0  # 左壁との目標距離（mm）
     FRONT_BLOCKED_THRESHOLD_MM: Final[float] = (
-        2000.0  # 前方が壁と判定する距離の閾値（mm）
+        500.0  # 前方が障害物と判定する距離の閾値（mm）
     )
-    LEFT_WALL_THRESHOLD_MM: Final[float] = (
-        2000.0  # 左側に壁がないと判定する距離の閾値（mm）
+    FRONT_SLOW_THRESHOLD_MM: Final[float] = (
+        1000.0  # 前方減速を開始する距離の閾値（mm）
+    )
+    WALL_DETECTION_THRESHOLD_MM: Final[float] = (
+        2000.0  # 壁を検知する最大距離（mm）。これ以上は壁なしとみなす
     )
 
 
@@ -25,7 +27,7 @@ class WallPositionPerceptionConfig:
 class PerceptionConfig:
     """知覚モジュール設定の集約"""
 
-    wall_position: WallPositionPerceptionConfig = WallPositionPerceptionConfig()
+    corridor: CorridorPerceptionConfig = CorridorPerceptionConfig()
 
 
 # シングルトンインスタンス
