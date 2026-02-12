@@ -17,7 +17,7 @@ class WallFollowDecisionConfig:
         0.001  # D制御の微分ゲイン（デフォルトは0.001。0.0を指定すると無効）
     )
     DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
-    BASE_SPEED: Final[float] = 0.35  # 通常走行時の基本速度 [0.0, 1.0]
+    BASE_SPEED: Final[float] = 0.42  # 通常走行時の基本速度 [0.0, 1.0]
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
 
     # 前方壁との距離によるステアリング比例制御（右折・左折共通）
@@ -47,7 +47,7 @@ class WallFollowDecisionConfig:
 
     # ステアリングレートリミッターの設定
     MAX_STEERING_RATE: Final[float] = (
-        10.0  # 1秒あたりのステアリング最大変化量。0.0で無制限
+        15.0  # 1秒あたりのステアリング最大変化量。0.0で無制限
     )
 
 
