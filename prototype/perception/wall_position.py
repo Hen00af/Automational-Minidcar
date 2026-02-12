@@ -61,5 +61,6 @@ class WallPositionPerception:
         return WallFeatures(
             error_from_target=error,
             is_front_blocked=front_blocked,
+            front_distance_mm=data.front_mm,
             is_left_wall=is_left_wall,
         )

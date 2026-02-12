@@ -15,4 +15,5 @@ class WallFeatures:
 
     error_from_target: float  # 目標距離とのズレ（正なら離れすぎ、負なら近すぎ）
     is_front_blocked: bool  # 前方に壁があるか（右折・停止判断用）
+    front_distance_mm: float  # 前方の壁との距離（mm）
     is_left_wall: bool  # 左に壁があるか（左折判断用）
