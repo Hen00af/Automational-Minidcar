@@ -29,7 +29,6 @@ class WallFollowDecision:
         max_steering: float = decision.wall_follow.MAX_STEERING,
         steer_near_distance_mm: float = decision.wall_follow.STEER_NEAR_DISTANCE_MM,
         steer_far_distance_mm: float = decision.wall_follow.STEER_FAR_DISTANCE_MM,
-        front_blocked_speed: float = decision.wall_follow.FRONT_BLOCKED_SPEED,
         front_blocked_near_steering: float = decision.wall_follow.FRONT_BLOCKED_NEAR_STEERING,
         front_blocked_far_steering: float = decision.wall_follow.FRONT_BLOCKED_FAR_STEERING,
         corner_left_speed: float = decision.wall_follow.CORNER_LEFT_SPEED,
@@ -49,7 +48,6 @@ class WallFollowDecision:
             max_steering: ステアリングの最大値（絶対値）。デフォルトは設定ファイルの値
             steer_near_distance_mm: 比例制御の近距離閾値（mm）。デフォルトは設定ファイルの値
             steer_far_distance_mm: 比例制御の遠距離閾値（mm）。デフォルトは設定ファイルの値
-            front_blocked_speed: 前方に壁がある場合の速度。デフォルトは設定ファイルの値
             front_blocked_near_steering: 前方壁が近い時のステアリング（右折用）。デフォルトは設定ファイルの値
             front_blocked_far_steering: 前方壁が遠い時のステアリング（右折用）。デフォルトは設定ファイルの値
             corner_left_speed: 左コーナー時の速度。デフォルトは設定ファイルの値
@@ -63,7 +61,6 @@ class WallFollowDecision:
         self.max_steering = max_steering
         self.steer_near_distance_mm = steer_near_distance_mm
         self.steer_far_distance_mm = steer_far_distance_mm
-        self.front_blocked_speed = front_blocked_speed
         self.front_blocked_near_steering = front_blocked_near_steering
         self.front_blocked_far_steering = front_blocked_far_steering
         self.corner_left_speed = corner_left_speed
@@ -125,17 +122,13 @@ class WallFollowDecision:
                 self.front_blocked_far_steering,
             )
             steer = self._apply_rate_limit(target_steer, current_time)
-            throttle = self._apply_curve_deceleration(
-                self.front_blocked_speed, steer
-            )
+            throttle = self._apply_curve_deceleration(self.base_speed, steer)
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
                 steer=steer,
                 throttle=throttle,
-                mode=DriveMode.STOP
-                if throttle == 0.0
-                else DriveMode.SLOW,
+                mode=DriveMode.SLOW,
                 reason="front_blocked",
             )
 

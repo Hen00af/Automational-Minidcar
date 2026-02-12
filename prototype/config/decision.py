@@ -29,7 +29,6 @@ class WallFollowDecisionConfig:
     )
 
     # 前方に壁がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.30  # 前方に壁がある場合の速度
     FRONT_BLOCKED_NEAR_STEERING: Final[
         float
     ] = -1.0  # 近距離時のステアリング（強く右折）
