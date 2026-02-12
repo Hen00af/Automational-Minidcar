@@ -19,7 +19,13 @@ class CorridorPerceptionConfig:
         1000.0  # 前方減速を開始する距離の閾値（mm）
     )
     WALL_DETECTION_THRESHOLD_MM: Final[float] = (
-        2000.0  # 壁を検知する最大距離（mm）。これ以上は壁なしとみなす
+        1000.0  # 壁を検知する最大距離（mm）。道幅1mに適合。これ以上は壁なしとみなす
+    )
+    WALL_TARGET_DISTANCE_MM: Final[float] = (
+        707.0  # 道幅1mの中央での45°センサー期待距離（mm）。片側壁なし時の補完用
+    )
+    SIDE_SLOW_THRESHOLD_MM: Final[float] = (
+        400.0  # 側方距離がこれ以下で減速開始（mm）
     )
 
 

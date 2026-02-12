@@ -25,12 +25,14 @@ class CorridorDecision:
         kp: float = decision.corridor.KP,
         kd: float = decision.corridor.KD,
         differential_smoothing_factor: float = decision.corridor.DIFFERENTIAL_SMOOTHING_FACTOR,
+        max_d_term: float = decision.corridor.MAX_D_TERM,
         base_speed: float = decision.corridor.BASE_SPEED,
         high_speed: float = decision.corridor.HIGH_SPEED,
         max_steering: float = decision.corridor.MAX_STEERING,
         front_blocked_speed: float = decision.corridor.FRONT_BLOCKED_SPEED,
         front_blocked_steering: float = decision.corridor.FRONT_BLOCKED_STEERING,
         front_slow_threshold_mm: float = perception.corridor.FRONT_SLOW_THRESHOLD_MM,
+        side_slow_threshold_mm: float = perception.corridor.SIDE_SLOW_THRESHOLD_MM,
     ):
         """
         初期化
@@ -39,12 +41,14 @@ class CorridorDecision:
             kp: P制御の比例ゲイン。デフォルトは設定ファイルの値
             kd: D制御の微分ゲイン。デフォルトは設定ファイルの値（0.0で無効）
             differential_smoothing_factor: 微分値の平滑化係数 [0.0, 1.0]。デフォルトは設定ファイルの値
+            max_d_term: D制御項の最大値（絶対値）。デフォルトは設定ファイルの値
             base_speed: 通常走行時の基本速度 [0.0, 1.0]。デフォルトは設定ファイルの値
             high_speed: 前方が開けている場合の高速 [0.0, 1.0]。デフォルトは設定ファイルの値
             max_steering: ステアリングの最大値（絶対値）。デフォルトは設定ファイルの値
             front_blocked_speed: 前方に障害物がある場合の速度。デフォルトは設定ファイルの値
             front_blocked_steering: 前方障害物時のデフォルトステアリング。デフォルトは設定ファイルの値
             front_slow_threshold_mm: 前方減速開始の閾値（mm）。デフォルトは設定ファイルの値
+            side_slow_threshold_mm: 側方距離がこれ以下で減速開始（mm）。デフォルトは設定ファイルの値
         """
         self.kp = kp
         self.base_speed = base_speed
@@ -53,10 +57,11 @@ class CorridorDecision:
         self.front_blocked_speed = front_blocked_speed
         self.front_blocked_steering = front_blocked_steering
         self.front_slow_threshold_mm = front_slow_threshold_mm
+        self.side_slow_threshold_mm = side_slow_threshold_mm
 
         # D制御器を初期化
         self._differential_controller = DifferentialController(
-            kd=kd, smoothing_factor=differential_smoothing_factor
+            kd=kd, smoothing_factor=differential_smoothing_factor, max_d_term=max_d_term,
         )
 
         # frame_idカウンター
@@ -111,8 +116,12 @@ class CorridorDecision:
         # ステアリングを -max_steering 〜 +max_steering の範囲にクランプ
         steering = max(min(steering, self.max_steering), -self.max_steering)
 
-        # 3. 速度制御: 前方距離に応じて速度を調整
-        speed = self._calculate_speed(features.front_distance_mm)
+        # 3. 速度制御: 前方距離と側方距離に応じて速度を調整
+        speed = self._calculate_speed(
+            features.front_distance_mm,
+            features.left_front_mm,
+            features.right_front_mm,
+        )
 
         return Command(
             frame_id=self._frame_id,
@@ -123,25 +132,36 @@ class CorridorDecision:
             reason="corridor_center",
         )
 
-    def _calculate_speed(self, front_distance_mm: float) -> float:
+    def _calculate_speed(
+        self,
+        front_distance_mm: float,
+        left_front_mm: float = 8191.0,
+        right_front_mm: float = 8191.0,
+    ) -> float:
         """
-        前方距離に応じた速度を計算
+        前方距離と側方距離に応じた速度を計算
 
         前方が開けている場合はhigh_speed、障害物が近い場合はbase_speedに減速。
-        線形補間で滑らかに遷移。
+        側方が近い場合も追加で減速。線形補間で滑らかに遷移。
 
         Args:
             front_distance_mm: 前方距離（mm）
+            left_front_mm: 左前方距離（mm）
+            right_front_mm: 右前方距離（mm）
 
         Returns:
             float: 速度 [0.0, 1.0]
         """
         if front_distance_mm >= self.front_slow_threshold_mm:
-            # 前方がクリア → 高速走行
-            return self.high_speed
+            speed = self.high_speed
         else:
-            # 前方に障害物が近づいている → 距離に応じて線形に減速
-            # front_slow_threshold_mm → high_speed
-            # 0mm → base_speed
             ratio = front_distance_mm / self.front_slow_threshold_mm
-            return self.base_speed + (self.high_speed - self.base_speed) * ratio
+            speed = self.base_speed + (self.high_speed - self.base_speed) * ratio
+
+        # 側方距離による追加減速: 壁に近い場合はさらに速度を落とす
+        min_side = min(left_front_mm, right_front_mm)
+        if min_side < self.side_slow_threshold_mm:
+            side_ratio = min_side / self.side_slow_threshold_mm
+            speed = min(speed, self.base_speed + (speed - self.base_speed) * side_ratio)
+
+        return speed

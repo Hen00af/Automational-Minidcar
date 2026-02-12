@@ -19,19 +19,22 @@ class DifferentialController:
     def __init__(
         self,
         kd: float = 0.0,
-        smoothing_factor: float = 0.0
+        smoothing_factor: float = 0.0,
+        max_d_term: float = 0.5,
     ):
         """
         初期化
-        
+
         Args:
             kd: D制御の微分ゲイン。デフォルトは0.0（無効）
             smoothing_factor: 微分値の平滑化係数 [0.0, 1.0]
                               0.0: 平滑化なし（前回の微分値を使用しない）
                               1.0: 完全に前回の値を保持
+            max_d_term: D制御項の最大値（絶対値）。D項の暴走を防止
         """
         self.kd = kd
         self.smoothing_factor = max(0.0, min(1.0, smoothing_factor))
+        self.max_d_term = max_d_term
         
         # 前回の誤差
         self._prev_error: Optional[float] = None
@@ -90,8 +93,9 @@ class DifferentialController:
         self._prev_time = current_time
         self._prev_error = error
         
-        # D制御項を返す
-        return self.kd * self._smoothed_derivative
+        # D制御項を返す（クランプ付き）
+        d_term = self.kd * self._smoothed_derivative
+        return max(min(d_term, self.max_d_term), -self.max_d_term)
     
     def reset(self) -> None:
         """
