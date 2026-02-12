@@ -62,6 +62,10 @@ class CorridorDecision:
         # frame_idカウンター
         self._frame_id = 0
 
+        # レートリミッター用の前回値
+        self._prev_steer: float = 0.0
+        self._prev_steer_time: float | None = None
+
     def decide(self, features: WallFeatures) -> Command:
         """
         特徴量から制御コマンドを決定
