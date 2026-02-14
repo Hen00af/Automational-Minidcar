@@ -13,13 +13,13 @@ class CorridorPerceptionConfig:
     """回廊走行知覚モジュール設定"""
 
     FRONT_BLOCKED_THRESHOLD_MM: Final[float] = (
-        500.0  # 前方が障害物と判定する距離の閾値（mm）
+        450.0  # 前方が障害物と判定する距離の閾値（mm）
     )
     FRONT_SLOW_THRESHOLD_MM: Final[float] = (
-        1000.0  # 前方減速を開始する距離の閾値（mm）
+        700.0  # 前方減速を開始する距離の閾値（mm）
     )
     WALL_DETECTION_THRESHOLD_MM: Final[float] = (
-        2000.0  # 壁を検知する最大距離（mm）。これ以上は壁なしとみなす
+        1200.0  # 壁を検知する最大距離（mm）。これ以上は壁なしとみなす
     )
 
 
