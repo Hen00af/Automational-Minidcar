@@ -12,10 +12,8 @@ from typing import Final
 class CorridorDecisionConfig:
     """回廊走行判断モジュール設定"""
 
-    KP: Final[float] = 1.5  # P制御の比例ゲイン（正規化誤差 [-1.0, +1.0] 用）
-    KD: Final[float] = (
-        0.3  # D制御の微分ゲイン（正規化誤差用。0.0を指定すると無効）
-    )
+    KP: Final[float] = 2.0  # P制御の比例ゲイン（正規化誤差 [-1.0, +1.0] 用）
+    KD: Final[float] = 0.3  # D制御の微分ゲイン（正規化誤差用。0.0を指定すると無効）
     DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
     BASE_SPEED: Final[float] = 0.30  # 通常走行時の基本速度 [0.0, 1.0]
     HIGH_SPEED: Final[float] = 0.40  # 前方が開けている場合の高速 [0.0, 1.0]
@@ -29,7 +27,9 @@ class CorridorDecisionConfig:
 
     # Y字分岐回避時の設定
     FORK_SPEED: Final[float] = 0.30  # 分岐検知時の速度（安定性重視で低速）
-    FORK_STEERING: Final[float] = 0.8  # 分岐回避時の転舵量（正=左固定。負にすると右固定）
+    FORK_STEERING: Final[float] = (
+        0.8  # 分岐回避時の転舵量（正=左固定。負にすると右固定）
+    )
 
 
 @dataclass(frozen=True)
