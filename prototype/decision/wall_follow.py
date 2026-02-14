@@ -104,20 +104,14 @@ class CorridorDecision:
                 reason="front_blocked",
             )
 
-        # 2. Y字分岐を検知した場合：減速して開いている方へ強い転舵
+        # 2. Y字分岐を検知した場合：減速して固定方向へ強い転舵
+        #    fork_steeringの符号で方向を決定（正=左、負=右）
+        #    センサー値での判断はノイズで発振するため使用しない
         if features.is_fork_detected:
-            # 左右のセンサー値を比較し、より開けている方（通路）を選択
-            if features.left_front_mm >= features.right_front_mm:
-                # 左の方が開けている → 左へ転舵（正のステアリング）
-                fork_steer = abs(self.fork_steering)
-            else:
-                # 右の方が開けている → 右へ転舵（負のステアリング）
-                fork_steer = -abs(self.fork_steering)
-
             return Command(
                 frame_id=self._frame_id,
                 t_capture_sec=current_time,
-                steer=fork_steer,
+                steer=self.fork_steering,
                 throttle=self.fork_speed,
                 mode=DriveMode.SLOW,
                 reason="fork_detected",
