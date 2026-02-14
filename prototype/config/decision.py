@@ -12,9 +12,9 @@ from typing import Final
 class CorridorDecisionConfig:
     """回廊走行判断モジュール設定"""
 
-    KP: Final[float] = 0.005  # P制御の比例ゲイン（左右バランス誤差用）
+    KP: Final[float] = 1.5  # P制御の比例ゲイン（正規化誤差 [-1.0, +1.0] 用）
     KD: Final[float] = (
-        0.001  # D制御の微分ゲイン（デフォルトは0.001。0.0を指定すると無効）
+        0.3  # D制御の微分ゲイン（正規化誤差用。0.0を指定すると無効）
     )
     DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
     BASE_SPEED: Final[float] = 0.30  # 通常走行時の基本速度 [0.0, 1.0]
