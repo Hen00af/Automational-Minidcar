@@ -53,13 +53,17 @@ class CorridorPerception:
         Returns:
             WallFeatures: 抽出した特徴量
         """
-        # 左右バランス誤差を計算
-        # left_front_mm - right_front_mm:
+        # 左右バランス誤差を計算（回廊幅で正規化して -1.0〜+1.0 の範囲に収める）
+        # (left - right) / (left + right):
         #   正の値 → 左が遠い（右寄り）→ 左に寄る必要がある → steering を正の値にする
         #   負の値 → 右が遠い（左寄り）→ 右に寄る必要がある → steering を負の値にする
         left_front = min(data.left_front_mm, self.wall_detection_threshold_mm)
         right_front = min(data.right_front_mm, self.wall_detection_threshold_mm)
-        left_right_error = left_front - right_front
+        corridor_width = left_front + right_front
+        if corridor_width > 0:
+            left_right_error = (left_front - right_front) / corridor_width
+        else:
+            left_right_error = 0.0
 
         # 前方の障害物判定（閾値以内なら障害物あり）
         front_blocked = data.front_mm < self.front_blocked_threshold_mm
