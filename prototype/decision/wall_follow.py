@@ -31,6 +31,8 @@ class CorridorDecision:
         front_blocked_speed: float = decision.corridor.FRONT_BLOCKED_SPEED,
         front_blocked_steering: float = decision.corridor.FRONT_BLOCKED_STEERING,
         front_slow_threshold_mm: float = perception.corridor.FRONT_SLOW_THRESHOLD_MM,
+        fork_speed: float = decision.corridor.FORK_SPEED,
+        fork_steering: float = decision.corridor.FORK_STEERING,
     ):
         """
         初期化
@@ -45,6 +47,8 @@ class CorridorDecision:
             front_blocked_speed: 前方に障害物がある場合の速度。デフォルトは設定ファイルの値
             front_blocked_steering: 前方障害物時のデフォルトステアリング。デフォルトは設定ファイルの値
             front_slow_threshold_mm: 前方減速開始の閾値（mm）。デフォルトは設定ファイルの値
+            fork_speed: Y字分岐検知時の速度。デフォルトは設定ファイルの値
+            fork_steering: Y字分岐回避時の転舵量（絶対値）。デフォルトは設定ファイルの値
         """
         self.kp = kp
         self.base_speed = base_speed
@@ -53,6 +57,8 @@ class CorridorDecision:
         self.front_blocked_speed = front_blocked_speed
         self.front_blocked_steering = front_blocked_steering
         self.front_slow_threshold_mm = front_slow_threshold_mm
+        self.fork_speed = fork_speed
+        self.fork_steering = fork_steering
 
         # D制御器を初期化
         self._differential_controller = DifferentialController(
@@ -98,7 +104,20 @@ class CorridorDecision:
                 reason="front_blocked",
             )
 
-        # 2. 通常の回廊中央走行（PD制御）
+        # 2. Y字分岐を検知した場合：減速して固定方向へ強い転舵
+        #    fork_steeringの符号で方向を決定（正=左、負=右）
+        #    センサー値での判断はノイズで発振するため使用しない
+        if features.is_fork_detected:
+            return Command(
+                frame_id=self._frame_id,
+                t_capture_sec=current_time,
+                steer=self.fork_steering,
+                throttle=self.fork_speed,
+                mode=DriveMode.SLOW,
+                reason="fork_detected",
+            )
+
+        # 3. 通常の回廊中央走行（PD制御）
         error = features.left_right_error
 
         # P制御: 左右バランス誤差に比例してステアリングを計算
@@ -115,7 +134,7 @@ class CorridorDecision:
         # ステアリングを -max_steering 〜 +max_steering の範囲にクランプ
         steering = max(min(steering, self.max_steering), -self.max_steering)
 
-        # 3. 速度制御: 前方距離に応じて速度を調整
+        # 4. 速度制御: 前方距離に応じて速度を調整
         speed = self._calculate_speed(features.front_distance_mm)
 
         return Command(
