@@ -15,6 +15,7 @@ class WallFeatures:
 
     left_right_error: float    # 左右バランス誤差（正=右寄り→左に寄る、負=左寄り→右に寄る）
     is_front_blocked: bool     # 前方に障害物があるか（回避判断用）
+    is_fork_detected: bool     # Y字分岐を検知したか（分岐回避用）
     front_distance_mm: float   # 前方距離（速度制御用）
     left_front_mm: float       # 左斜め前距離（回避方向判断用）
     right_front_mm: float      # 右斜め前距離（回避方向判断用）

@@ -153,7 +153,7 @@ class Orchestrator:
                 # ヘッダーを一度だけ出力
                 if not header_printed:
                     print(
-                        "TIME   | F_DIST | RF_DIST | LF_DIST | LR_ERR  | FRONT | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS"
+                        "TIME   | F_DIST | RF_DIST | LF_DIST | LR_ERR  | FRONT | FORK  | STEER | THROTTLE | STEER_PWM | THROTTLE_PWM | STATUS"
                     )
                     header_printed = True
 
@@ -370,10 +370,11 @@ class Orchestrator:
 
         # 知覚結果のフラグ
         front_flag = "Y" if features.is_front_blocked else "N"
+        fork_flag = "Y" if features.is_fork_detected else "N"
 
         # パイプ区切りのテーブル形式で出力
         print(
-            f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {rf_dist:>5.0f}mm | {lf_dist:>5.0f}mm | {lr_error:>+6.0f}mm | {front_flag:>5} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
+            f"{timestamp:>5.1f}s | {f_dist:>4.0f}mm | {rf_dist:>5.0f}mm | {lf_dist:>5.0f}mm | {lr_error:>+6.0f}mm | {front_flag:>5} | {fork_flag:>5} | {steer:>+5.2f} | {speed:>6.2f}   | {steer_pwm:>7}us | {throttle_pwm:>9}us |  {status_str}"
         )
 
     def emergency_stop(self, reason: str = "emergency") -> Telemetry:
