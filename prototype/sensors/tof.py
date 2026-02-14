@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sys
 import time
+from collections import deque
 from typing import Optional, Tuple
 from dataclasses import dataclass
 
@@ -21,6 +22,9 @@ import adafruit_vl53l0x
 
 # 範囲外を示すデフォルト値（mm）
 _OUT_OF_RANGE: int = 8190
+
+# メディアンフィルタのウィンドウサイズ（奇数）
+_MEDIAN_WINDOW: int = 3
 
 
 @dataclass
@@ -58,6 +62,10 @@ class TOFSensor:
         self._last_readings = TOFReadings(
             front=_OUT_OF_RANGE, right_front=_OUT_OF_RANGE, left_front=_OUT_OF_RANGE
         )
+        # メディアンフィルタ用バッファ（各センサーごとに直近 _MEDIAN_WINDOW フレーム分）
+        self._median_buffers: list[deque[int]] = [
+            deque(maxlen=_MEDIAN_WINDOW) for _ in range(sensors.vl53l0x.NUM_SENSORS)
+        ]
     
     def _initialize_hardware(self) -> None:
         """ハードウェアを初期化"""
@@ -171,10 +179,22 @@ class TOFSensor:
             sensor.stop_continuous()
         print("[TOF] 連続計測モードを停止しました", file=sys.stderr)
 
+    @staticmethod
+    def _median(buf: deque[int]) -> int:
+        """バッファ内の中央値を返す。バッファが空なら _OUT_OF_RANGE を返す。"""
+        n = len(buf)
+        if n == 0:
+            return _OUT_OF_RANGE
+        s = sorted(buf)
+        return s[n // 2]
+
     def poll(self) -> tuple[bool, DistanceData]:
         """
-        data-readyなセンサーのみ読み出し、更新有無と最新のDistanceDataを返す。
+        data-readyなセンサーのみ読み出し、メディアンフィルタを適用して返す。
         readyでないセンサーは前回値を保持する。
+
+        メディアンフィルタ: 直近 _MEDIAN_WINDOW フレームの中央値を使用し、
+        1-2フレームのスパイクノイズを除去する。
 
         Returns:
             (updated, distance_data): 1台でも更新があればupdated=True
@@ -183,16 +203,13 @@ class TOFSensor:
             self._initialize_hardware()
 
         updated = False
-        # front=0, right_front=1, left_front=2
-        if self._sensors[0].data_ready:
-            self._last_readings.front = self._sensors[0].range
-            updated = True
-        if self._sensors[1].data_ready:
-            self._last_readings.right_front = self._sensors[1].range
-            updated = True
-        if self._sensors[2].data_ready:
-            self._last_readings.left_front = self._sensors[2].range
-            updated = True
+        fields = ("front", "right_front", "left_front")
+        for i, field in enumerate(fields):
+            if self._sensors[i].data_ready:
+                raw = self._sensors[i].range
+                self._median_buffers[i].append(raw)
+                setattr(self._last_readings, field, self._median(self._median_buffers[i]))
+                updated = True
 
         return updated, DistanceData.from_tof_readings(self._last_readings)
 
