@@ -22,14 +22,14 @@ class CorridorDecisionConfig:
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
 
     # 前方に障害物がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.25  # 前方に障害物がある場合の速度
+    FRONT_BLOCKED_SPEED: Final[float] = 0.30  # 前方に障害物がある場合の速度
     FRONT_BLOCKED_STEERING: Final[
         float
     ] = -1.0  # 前方障害物時のデフォルトステアリング（右回避、負の値）
 
     # Y字分岐回避時の設定
-    FORK_SPEED: Final[float] = 0.20  # 分岐検知時の速度（安定性重視で低速）
-    FORK_STEERING: Final[float] = 1.0  # 分岐回避時の転舵量（最大転舵）
+    FORK_SPEED: Final[float] = 0.30  # 分岐検知時の速度（安定性重視で低速）
+    FORK_STEERING: Final[float] = 0.8  # 分岐回避時の転舵量（最大転舵）
 
 
 @dataclass(frozen=True)
