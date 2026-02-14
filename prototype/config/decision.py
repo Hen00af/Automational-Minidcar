@@ -22,7 +22,7 @@ class CorridorDecisionConfig:
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
 
     # 前方に障害物がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.25  # 前方に障害物がある場合の速度
+    FRONT_BLOCKED_SPEED: Final[float] = 0.30  # 前方に障害物がある場合の速度
     FRONT_BLOCKED_STEERING: Final[
         float
     ] = -1.0  # 前方障害物時のデフォルトステアリング（右回避、負の値）
