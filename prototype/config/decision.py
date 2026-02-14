@@ -14,9 +14,9 @@ class CorridorDecisionConfig:
 
     KP: Final[float] = 0.005  # P制御の比例ゲイン（左右バランス誤差用）
     KD: Final[float] = (
-        0.001  # D制御の微分ゲイン（デフォルトは0.001。0.0を指定すると無効）
+        0.003  # D制御の微分ゲイン（デフォルトは0.003。0.0を指定すると無効）
     )
-    DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
+    DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.3  # 微分値の平滑化係数 [0.0, 1.0]
     BASE_SPEED: Final[float] = 0.30  # 通常走行時の基本速度 [0.0, 1.0]
     HIGH_SPEED: Final[float] = 0.40  # 前方が開けている場合の高速 [0.0, 1.0]
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
