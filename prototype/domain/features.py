@@ -18,3 +18,5 @@ class WallFeatures:
     front_distance_mm: float   # 前方距離（速度制御用）
     left_front_mm: float       # 左斜め前距離（回避方向判断用）
     right_front_mm: float      # 右斜め前距離（回避方向判断用）
+    is_corner_approaching: bool = False   # コーナー接近中か
+    corner_severity: float = 0.0          # コーナーの深さ [0.0, 1.0]

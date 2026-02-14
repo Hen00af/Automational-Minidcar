@@ -18,14 +18,17 @@ class CorridorDecisionConfig:
     )
     DIFFERENTIAL_SMOOTHING_FACTOR: Final[float] = 0.0  # 微分値の平滑化係数 [0.0, 1.0]
     BASE_SPEED: Final[float] = 0.30  # 通常走行時の基本速度 [0.0, 1.0]
-    HIGH_SPEED: Final[float] = 0.40  # 前方が開けている場合の高速 [0.0, 1.0]
+    HIGH_SPEED: Final[float] = 0.35  # 前方が開けている場合の高速 [0.0, 1.0]
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
 
     # 前方に障害物がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.25  # 前方に障害物がある場合の速度
+    FRONT_BLOCKED_SPEED: Final[float] = 0.18  # 前方に障害物がある場合の速度
     FRONT_BLOCKED_STEERING: Final[
         float
     ] = -1.0  # 前方障害物時のデフォルトステアリング（右回避、負の値）
+
+    # コーナー予測減速
+    CORNER_APPROACH_SPEED: Final[float] = 0.20  # コーナー接近時の減速目標速度
 
 
 @dataclass(frozen=True)

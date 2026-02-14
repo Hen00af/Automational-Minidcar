@@ -31,6 +31,7 @@ class CorridorDecision:
         front_blocked_speed: float = decision.corridor.FRONT_BLOCKED_SPEED,
         front_blocked_steering: float = decision.corridor.FRONT_BLOCKED_STEERING,
         front_slow_threshold_mm: float = perception.corridor.FRONT_SLOW_THRESHOLD_MM,
+        corner_approach_speed: float = decision.corridor.CORNER_APPROACH_SPEED,
     ):
         """
         初期化
@@ -45,6 +46,7 @@ class CorridorDecision:
             front_blocked_speed: 前方に障害物がある場合の速度。デフォルトは設定ファイルの値
             front_blocked_steering: 前方障害物時のデフォルトステアリング。デフォルトは設定ファイルの値
             front_slow_threshold_mm: 前方減速開始の閾値（mm）。デフォルトは設定ファイルの値
+            corner_approach_speed: コーナー接近時の減速目標速度。デフォルトは設定ファイルの値
         """
         self.kp = kp
         self.base_speed = base_speed
@@ -53,6 +55,7 @@ class CorridorDecision:
         self.front_blocked_speed = front_blocked_speed
         self.front_blocked_steering = front_blocked_steering
         self.front_slow_threshold_mm = front_slow_threshold_mm
+        self.corner_approach_speed = corner_approach_speed
 
         # D制御器を初期化
         self._differential_controller = DifferentialController(
@@ -118,13 +121,22 @@ class CorridorDecision:
         # 3. 速度制御: 前方距離に応じて速度を調整
         speed = self._calculate_speed(features.front_distance_mm)
 
+        # 4. コーナー予測減速: コーナー接近時はseverityに応じて減速
+        if features.is_corner_approaching:
+            corner_speed = (
+                self.base_speed
+                - (self.base_speed - self.corner_approach_speed)
+                * features.corner_severity
+            )
+            speed = min(speed, corner_speed)
+
         return Command(
             frame_id=self._frame_id,
             t_capture_sec=current_time,
             steer=steering,
             throttle=speed,
             mode=DriveMode.RUN,
-            reason="corridor_center",
+            reason="corner_approach" if features.is_corner_approaching else "corridor_center",
         )
 
     def _calculate_speed(self, front_distance_mm: float) -> float:
