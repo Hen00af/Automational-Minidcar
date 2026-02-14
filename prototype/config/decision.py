@@ -12,7 +12,7 @@ from typing import Final
 class CorridorDecisionConfig:
     """回廊走行判断モジュール設定"""
 
-    KP: Final[float] = 0.003  # P制御の比例ゲイン（左右バランス誤差用）
+    KP: Final[float] = 0.004  # P制御の比例ゲイン（左右バランス誤差用）
     KD: Final[float] = (
         0.001  # D制御の微分ゲイン（デフォルトは0.001。0.0を指定すると無効）
     )
@@ -22,7 +22,7 @@ class CorridorDecisionConfig:
     MAX_STEERING: Final[float] = 1.0  # ステアリングの最大値（絶対値）
 
     # 前方に障害物がある場合の設定
-    FRONT_BLOCKED_SPEED: Final[float] = 0.30  # 前方に障害物がある場合の速度
+    FRONT_BLOCKED_SPEED: Final[float] = 0.25  # 前方に障害物がある場合の速度
     FRONT_BLOCKED_STEERING: Final[
         float
     ] = -1.0  # 前方障害物時のデフォルトステアリング（右回避、負の値）
