@@ -29,7 +29,7 @@ class CorridorDecisionConfig:
 
     # Y字分岐回避時の設定
     FORK_SPEED: Final[float] = 0.30  # 分岐検知時の速度（安定性重視で低速）
-    FORK_STEERING: Final[float] = 0.8  # 分岐回避時の転舵量（最大転舵）
+    FORK_STEERING: Final[float] = 0.8  # 分岐回避時の転舵量（正=左固定。負にすると右固定）
 
 
 @dataclass(frozen=True)
